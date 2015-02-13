@@ -2014,8 +2014,7 @@
      * if none, the init and attach methods are being called.
      * Remember: if you pass options, the attached method is NOT called automatically
      *
-     * @param {String}
-     *            method (optional) action
+     * @param {String} method (optional) action
      */
     $.fn.validationEngine = function(method) {
 
