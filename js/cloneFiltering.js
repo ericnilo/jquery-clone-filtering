@@ -79,6 +79,11 @@
             if(helper.lengthOf(config.data)) {
                 this._processCloning(config.data);
             }
+            // if url is defined then one of the following should also be defined:
+            // config.sort, config.loadMore or config.search
+            else if(config.url !== undefined) {
+
+            }
         },
 
         _processCloning: function(oData) {
