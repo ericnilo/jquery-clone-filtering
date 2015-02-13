@@ -5,6 +5,8 @@
     <title>Clone Filtering Test</title>
 </head>
 <body id="main_container">
+    <input type="text" class="search" placeholder="search">
+    <button type="button" class="search_btn">Search</button>
     <ul id="container">
     </ul>
 
@@ -32,18 +34,17 @@
 <script src="js/cloneFiltering.js"></script>
 <script>
     $(function () {
-        $.ajax('ajax/get_employee_list.php',{
-                success: function (sRetData) {
-                    var oRetData = $.parseJSON(sRetData);
-
-                    $('#main_container').cloneFiltering({
-                        data: oRetData,
-                        container: '#container',
-                        template : '[data-template="employee-list"]'
-                    })
-                }
+        $('#main_container').cloneFiltering({
+            url: 'ajax/get_employee_list.php',
+            container: '#container',
+            template : '[data-template="employee-list"]',
+            search: {
+                input: {
+                    selector : 'input.search'
+                },
+                btn  : 'button.search_btn'
             }
-        );
+        })
     });
 </script>
 </html>

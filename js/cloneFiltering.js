@@ -4,6 +4,7 @@
  *          container: '#container',                // (REQUIRED) Container of the template to be inserted
  *          template: '#template',                  // (REQUIRED) Template to be cloned
  *          url: 'localhost/ajax/get_something',    // (OPTIONAL) URL of the data needed for the cloning and filtering
+ *          csrf_token: 'my_token'                  // (OPTIONAL) For security reason
  *          data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                  if url is set do not use this
  *          limit: 10,                              // (OPTIONAL) Will be using in load more
@@ -12,12 +13,9 @@
  *          search: {                               // (OPTIONAL) Selector of the search input MUST BE AN INPUT
  *              input: {
  *                  selector: 'input.search',
- *                  triggerBy: 'change'
+ *                  eventType: 'keypress'
  *              },
- *              button: {
- *                  selector: 'div.search_btn',
- *                  triggerBy: 'click'
- *              }
+ *              btn: 'div.search_btn'
  *          },
  *      });
  *
@@ -30,9 +28,19 @@
      * Error message container
      * @const
      */
-    var ERROR_MSGS = {
+    var ERROR_MSG = {
         ui          : 'DOM not found or do not exists!',
-        objectFormat: 'Format of the object is invalid'
+        objectFormat: 'Format of the object is invalid. Format should be:' +
+                        '{ ' +
+                            'data:' +
+                                '{ 0:' +
+                                    '{ any: "value" }' +
+                                    '{ any: "value" }' +
+                                    '...' +
+                                '},' +
+                                '...' +
+                            'total_rows: 10' +
+                        '}'
     };
 
     /**
@@ -72,23 +80,124 @@
 
             // this should be present so validate this
             if (!helper.isValidUI(uiContainer) && !helper.isValidUI(uiTemplate)) {
-                return config.container + ' and ' + config.template + ' ' + ERROR_MSGS.ui; // stop if the two is not found
+                return config.container + ' and ' + config.template + ' ' + ERROR_MSG.ui; // stop if the two is not found
             }
 
             // if config.data is found or set process cloning immediately
             if(helper.lengthOf(config.data)) {
                 this._processCloning(config.data);
             }
+
             // if url is defined then one of the following should also be defined:
             // config.sort, config.loadMore or config.search
             else if(config.url !== undefined) {
 
+                // check first if config.search is an object and has at least one index
+                if(helper.lengthOf(config.search)) {
+
+                    // check if config.search has 'input' property
+                    if(config.search.hasOwnProperty('input')) {
+
+                        // check if config.search.input has 'selector'
+                        if(config.search.input.hasOwnProperty('selector')) {
+                            var sEventType = (config.search.input.eventType !== undefined) ?
+                                             config.search.input.eventType : 'keypress';
+
+                            this._attachEvent(config.search.input.selector, sEventType, function(e) {
+                                if(e.keyCode === 13) {
+                                    mainMethods._search();
+                                }
+                            });
+                        }
+
+                        // check if config.search.button has 'button'
+                        if(config.search.hasOwnProperty('btn')) {
+                            this._attachEvent(config.search.btn, 'click', function(e) {
+                                mainMethods._search();
+                            });
+                        }
+                    }
+                }
             }
         },
 
+        _getOrdering: function() {
+            var uiSorter = uiMainContainer.find(config.sort).children('li.active');
+
+            return {
+                'order_by': uiSorter.attr('data-field'),
+                'order'   : uiSorter.attr('data-sort')
+            };
+        },
+
+        /**
+         * For search functionality
+         *
+         * @private
+         */
+        _search: function() {
+            var sOrder = mainMethods._getOrdering(),
+                oData = {
+                    keyword : uiMainContainer.find(config.search.input.selector).val(),
+                    order_by: sOrder.order_by,
+                    order   : sOrder.order
+                };
+            uiMainContainer.find(config.container).children().remove();
+            mainMethods._doAjax(config.url, oData);
+        },
+
+        /**
+         * Attach an event to a specific selector
+         *
+         * @param {String} sSelector
+         * @param {String} sEventType
+         * @param fnCallback
+         * @private
+         */
+        _attachEvent: function(sSelector, sEventType, fnCallback) {
+            uiMainContainer.find(sSelector).on(sEventType, function(e) {
+                e.stopPropagation();
+                fnCallback(e);
+            });
+        },
+
+        /**
+         * Ajax Processing function
+         *
+         * @param {String} sUrl
+         * @param {Object} oData
+         * @private
+         */
+        _doAjax: function(sUrl, oData) {
+            $.ajax(sUrl, {
+                type: 'POST',
+                data: oData,
+                success: function(sRetData) {
+                    if(typeof sRetData === 'string' && sRetData.length) {
+                        var oRetData = $.parseJSON(sRetData);
+
+                        if (!mainMethods._isValidFormat(oRetData)) {
+                            return ERROR_MSG.objectFormat; // stop if format of the object is invalid
+                        }
+
+                        if (helper.lengthOf(oRetData.data)) {
+                            mainMethods._processCloning(oRetData);
+                        }
+                    }
+                }
+            })
+        },
+
+        /**
+         * Clone the template and append it to container
+         *
+         * @param {Object} oData
+         * @returns {String|Null} If string cloning is failed
+         * @private
+         */
         _processCloning: function(oData) {
-            if(!oData.hasOwnProperty('data') && oData.hasOwnProperty('total_rows')){
-                return ERROR_MSGS.objectFormat; // stop if format of the object is invalid
+            if (!this._isValidFormat(oData)) {
+                return ERROR_MSG.objectFormat; // stop if format of the object is invalid
             }
 
             var uiClonedTemplate;
@@ -129,6 +238,17 @@
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
                 }
             }
+        },
+
+        /**
+         * Check if oData has a valid format
+         *
+         * @param {Object} oData
+         * @returns {boolean} If true oData has a valid format
+         * @private
+         */
+        _isValidFormat: function (oData) {
+            return (oData.hasOwnProperty('data') && oData.hasOwnProperty('total_rows'));
         }
     };
 
