@@ -49,7 +49,7 @@
     /**
      * DOM main container of the cloning or filtering
      *
-     * @param {Object} uiMainContainer jQuery object pertaining to the #main_container by default
+     * @param {Object} uiMainContainer jQuery object referring to the main container. This will attach event to this DOM
      */
     var uiMainContainer;
 
@@ -102,7 +102,7 @@
 
                         process._attachEvent(config.search.input.selector, sEventType, function (e) {
                             if (sEventType === 'keypress' && e.keyCode === 13) {
-                                process._search();
+                                process.search();
                             }
                         });
                     }
@@ -110,15 +110,15 @@
                     // check if config.search has 'btn'
                     if (config.search.hasOwnProperty('btn')) {
                         process._attachEvent(config.search.btn, 'click', function () {
-                            process._search();
+                            process.search();
                         });
                     }
 
                     // check if config has 'loadMore'
                     if (config.hasOwnProperty('loadMore')) {
                         process._attachEvent(config.loadMore, 'click', function () {
-                            console.log();
-                        })
+                            // TODO: load more code here.
+                        });
                     }
 
                 }
@@ -127,6 +127,33 @@
     };
 
     var process = {
+        /**
+         * For search functionality
+         *
+         */
+        search: function() {
+            var uiSearch = uiMainContainer.find(config.search.input.selector),
+                sOrder = process._getOrdering(),
+                oData = {
+                    keyword : uiMainContainer.find(config.search.input.selector).val(),
+                    order_by: sOrder.order_by,
+                    order   : sOrder.order
+                };
+
+            // remove the children of the container
+            // also make sure the template is not remove
+            uiMainContainer.find(config.container).children().not(config.template).remove();
+
+            // Process ajax
+            process._ajax(config.url, oData, function() {
+                uiSearch.val(uiSearch.attr('data-searched'))
+            });
+        },
+
+        loadMore: function() {
+            // TODO: load more code here.
+        },
+
         /**
          * Check if oData has a valid format
          *
@@ -163,7 +190,7 @@
         /**
          * Clone the template and append it to container
          *
-         * @param {Object} oData
+         * @param {Object} oData  Note: This should have a valid format. Pls refer to ERROR_MSG.objectFormat
          * @returns {String|Null} If string cloning is failed
          * @private
          */
@@ -268,36 +295,20 @@
          * @private
          */
         _getOrdering: function() {
-            var uiSorter = uiMainContainer.find(config.sort).children('li.active');
+            // cache DOM sort for better performance
+            var uiSort = uiMainContainer.find(config.sort);
+
+            if (!helper.isValidUI(uiSort)) {
+                // stop if sort DOM not found and return data
+                return { 'order_by': null, 'order': null };
+            }
+
+            var uiSorter = uiSort.children('li.active');
 
             return {
                 'order_by': uiSorter.attr('data-field'),
                 'order'   : uiSorter.attr('data-sort')
             };
-        },
-
-        /**
-         * For search functionality
-         *
-         * @private
-         */
-        _search: function() {
-            var uiSearch = uiMainContainer.find(config.search.input.selector),
-                sOrder = process._getOrdering(),
-                oData = {
-                    keyword : uiMainContainer.find(config.search.input.selector).val(),
-                    order_by: sOrder.order_by,
-                    order   : sOrder.order
-                };
-
-            // remove the children of the container
-            // also make sure the template is not remove
-            uiMainContainer.find(config.container).children().not(config.template).remove();
-
-            // Process ajax
-            process._ajax(config.url, oData, function() {
-                uiSearch.val(uiSearch.attr('data-searched'))
-            });
         }
     };
 
@@ -310,7 +321,7 @@
          * @returns {number} Length of an oObject
          */
         lengthOf: function(oObject) {
-            if(oObject === undefined) {
+            if(oObject === undefined && typeof oObject !== 'object') {
                 return 0; // stop here if oObject is not defined
             }
 
@@ -340,7 +351,7 @@
      *
      * @param {Object} options Options of the plugin
      *
-     * @returns {$.fn}
+     * @returns {jQuery}
      * @constructor
      */
     $.fn.cloneFiltering = function(options) {

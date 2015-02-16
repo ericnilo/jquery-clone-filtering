@@ -43,7 +43,8 @@
                     selector : 'input.search'
                 },
                 btn  : 'button.search_btn'
-            }
+            },
+            loadMore: '#load_more_btn'
         })
     });
 </script>
