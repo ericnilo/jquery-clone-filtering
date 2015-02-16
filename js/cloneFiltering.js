@@ -136,7 +136,6 @@
 
                     // check if config.sort has 'selector'
                     if(config.sort.hasOwnProperty('selector')) {
-
                         process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
                             process.sort(e);
                         });
@@ -160,13 +159,13 @@
                     'order'   : oOrder.order
                 };
 
-            // remove the children of the container
-            // also make sure the template is not remove
-            process._removeChildrenOfContainer();
-
             // Process ajax
             process._ajax(config.url, oData, function () {
                 uiSearch.attr('data-searched', uiSearch.val());
+            }, function () {
+                // remove the children of the container
+                // also make sure the template is not remove
+                process._removeChildrenOfContainer();
             });
         },
 
@@ -224,12 +223,12 @@
                 'order'   : oOrder.order
             };
 
-            // remove the children of the container
-            // also make sure the template is not remove
-            process._removeChildrenOfContainer();
-
             process._ajax(config.url, oData, function (oRetData) {
                 process._loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
+            }, function () {
+                // remove the children of the container
+                // also make sure the template is not remove
+                process._removeChildrenOfContainer();
             });
         },
 
@@ -332,15 +331,19 @@
          * @param {String} sUrl
          * @param {Object} oData
          * @param [fnAdditionalCallback]
+         * @param [fnBeforeCloning]      Function that will be called before cloning
          * @private
          */
-        _ajax: function (sUrl, oData, fnAdditionalCallback) {
+        _ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
+            var oSettings = {};
+
             // check if csrf_token is set
             if(helper.lengthOf(config.csrfToken)) {
                 oData[config.csrfToken.name] = config.csrfToken.value;
             }
 
-            $.ajax(sUrl, {
+            oSettings = {
+                url    : sUrl,
                 type   : 'POST',
                 data   : oData,
                 success: function (sRetData) {
@@ -352,6 +355,10 @@
                         }
 
                         if (helper.lengthOf(oRetData.data)) {
+                            if (typeof fnBeforeCloning === 'function') {
+                                fnBeforeCloning(oRetData);
+                            }
+
                             process._cloning(oRetData);
 
                             if (typeof fnAdditionalCallback === 'function') {
@@ -360,7 +367,13 @@
                         }
                     }
                 }
-            });
+            };
+
+            if(config.hasOwnProperty('customAjax') && typeof config.customAjax === "function") {
+                config.customAjax(oSettings);
+            } else {
+                $.ajax(oSettings);
+            }
         },
 
         /**
@@ -374,6 +387,7 @@
         _attachEvent: function (sSelector, sEventType, fnCallback) {
             uiMainContainer.find(sSelector).on(sEventType, function (e) {
                 e.stopPropagation();
+                e.preventDefault();
                 if (typeof fnCallback === 'function') {
                     fnCallback(e);
                 }
@@ -420,7 +434,7 @@
 
             return {
                 orderBy: uiSort.attr('data-sort-field'),
-                order   : uiSort.attr('data-sort')
+                order  : uiSort.attr('data-sort')
             };
         },
 
