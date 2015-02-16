@@ -114,6 +114,7 @@
                         });
                     }
 
+                    // TODO: no structure validation yet in search, sort and etc.
                     // check if config.search.input has 'selector'
                     if (config.search.input.hasOwnProperty('selector')) {
                         var sEventType = (config.search.input.eventType !== undefined) ?
