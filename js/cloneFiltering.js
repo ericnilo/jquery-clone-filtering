@@ -1,3 +1,4 @@
+/*jshint nonew:true, jquery:true, curly:true, noarg:true, forin:true, noempty:true, eqeqeq:true, strict:true, undef:true, bitwise:true, newcap:true, immed:true, onevar:true, browser:true, es3:true, gcl:true */
 /**
  * $('#main_container')                             // Container of the load more, search, and sort
  *      .cloneFiltering({
@@ -7,7 +8,7 @@
  *          csrf_token: {                           // (OPTIONAL) For security reason
  *              value: 'x5925626lsd62',
  *              name: 'my_token'
- *          }
+ *          },
  *          data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                  if url is set do not use this
  *          limit: 10,                              // (OPTIONAL) Will be using in load more
@@ -34,16 +35,16 @@
     var ERROR_MSG = {
         ui          : 'DOM not found or do not exists!',
         objectFormat: 'Format of the object is invalid. Format should be:' +
-                        '{ ' +
-                            'data:' +
-                                '{ 0:' +
-                                    '{ any: "value" }' +
-                                    '{ any: "value" }' +
-                                    '...' +
-                                '},' +
-                                '...' +
-                            'total_rows: 10' +
-                        '}'
+                    '{ ' +
+                    'data:' +
+                    '{ 0:' +
+                    '{ any: "value" }' +
+                    '{ any: "value" }' +
+                    '...' +
+                    '},' +
+                    '...' +
+                    'total_rows: 10' +
+                    '}'
     };
 
     /**
@@ -65,7 +66,8 @@
      */
     var defaults = {
         container: '#container',
-        template : '#template'
+        template : '#template',
+        limit    : 10
     };
 
     var init = function (options) {
@@ -89,11 +91,18 @@
         // config.sort, config.loadMore or config.search
         else if (config.url !== undefined) {
 
-            // check first if config.search is an object and has at least one index
+            // check first if config.search is an object and has at least one element in it
             if (helper.lengthOf(config.search)) {
 
                 // check if config.search has 'input' property
                 if (config.search.hasOwnProperty('input')) {
+
+                    // check if config has 'loadMore'
+                    if (config.hasOwnProperty('loadMore')) {
+                        process._attachEvent(config.loadMore, 'click', function () {
+                            process.loadMore();
+                        });
+                    }
 
                     // check if config.search.input has 'selector'
                     if (config.search.input.hasOwnProperty('selector')) {
@@ -113,14 +122,6 @@
                             process.search();
                         });
                     }
-
-                    // check if config has 'loadMore'
-                    if (config.hasOwnProperty('loadMore')) {
-                        process._attachEvent(config.loadMore, 'click', function () {
-                            // TODO: load more code here.
-                        });
-                    }
-
                 }
             }
         }
@@ -131,13 +132,13 @@
          * For search functionality
          *
          */
-        search: function() {
+        search: function () {
             var uiSearch = uiMainContainer.find(config.search.input.selector),
                 sOrder = process._getOrdering(),
                 oData = {
-                    keyword : uiMainContainer.find(config.search.input.selector).val(),
-                    order_by: sOrder.order_by,
-                    order   : sOrder.order
+                    'keyword' : uiMainContainer.find(config.search.input.selector).val(),
+                    'order_by': sOrder.orderBy,
+                    'order'   : sOrder.order
                 };
 
             // remove the children of the container
@@ -145,13 +146,49 @@
             uiMainContainer.find(config.container).children().not(config.template).remove();
 
             // Process ajax
-            process._ajax(config.url, oData, function() {
-                uiSearch.val(uiSearch.attr('data-searched'))
+            process._ajax(config.url, oData, function () {
+                uiSearch.attr('data-searched', uiSearch.val());
             });
         },
 
-        loadMore: function() {
-            // TODO: load more code here.
+        /**
+         * For load more functionality
+         *
+         */
+        loadMore: function () {
+            var sOrder = process._getOrdering(),
+                oData = {
+                    'keyword' : process._getPrevSearched(),
+                    'offset'  : process._getOffset(),
+                    'order_by': sOrder.orderBy,
+                    'order'   : sOrder.order
+                };
+
+            process._setSearchValue();
+
+            process._ajax(config.url, oData, function (oRetData) {
+                process._loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
+            });
+        },
+
+        /**
+         * Show or Hide the Load more button
+         *
+         * @param {Number} numTotalRows
+         * @param {Number} numUIRows
+         * @private
+         */
+        _loadMoreShowHide: function (numTotalRows, numUIRows) {
+            var uiLoadMore = uiMainContainer.find(config.loadMore);
+
+            uiLoadMore.text('Load More');
+
+            if (numTotalRows === numUIRows || numTotalRows <= config.limit || numUIRows > numTotalRows) {
+                uiLoadMore.hide();
+            } else {
+                // show again the load more button if it is hidden
+                uiLoadMore.show();
+            }
         },
 
         /**
@@ -191,7 +228,7 @@
          * Clone the template and append it to container
          *
          * @param {Object} oData  Note: This should have a valid format. Pls refer to ERROR_MSG.objectFormat
-         * @returns {String|Null} If string cloning is failed
+         * @returns {String|Null} If this function returns string, cloning failed
          * @private
          */
         _cloning: function (oData) {
@@ -225,12 +262,12 @@
          * @param [fnAdditionalCallback]
          * @private
          */
-        _ajax: function(sUrl, oData, fnAdditionalCallback) {
+        _ajax: function (sUrl, oData, fnAdditionalCallback) {
             $.ajax(sUrl, {
-                type: 'POST',
-                data: oData,
-                success: function(sRetData) {
-                    if(typeof sRetData === 'string' && sRetData.length) {
+                type   : 'POST',
+                data   : oData,
+                success: function (sRetData) {
+                    if (typeof sRetData === 'string' && sRetData.length) {
                         var oRetData = $.parseJSON(sRetData);
 
                         if (!process._isValidFormat(oRetData)) {
@@ -240,13 +277,13 @@
                         if (helper.lengthOf(oRetData.data)) {
                             process._cloning(oRetData);
 
-                            if(typeof fnAdditionalCallback === 'function') {
-                                fnAdditionalCallback();
+                            if (typeof fnAdditionalCallback === 'function') {
+                                fnAdditionalCallback(oRetData);
                             }
                         }
                     }
                 }
-            })
+            });
         },
 
         /**
@@ -257,8 +294,8 @@
          * @param fnCallback
          * @private
          */
-        _attachEvent: function(sSelector, sEventType, fnCallback) {
-            uiMainContainer.find(sSelector).on(sEventType, function(e) {
+        _attachEvent: function (sSelector, sEventType, fnCallback) {
+            uiMainContainer.find(sSelector).on(sEventType, function (e) {
                 e.stopPropagation();
                 if (typeof fnCallback === 'function') {
                     fnCallback(e);
@@ -291,24 +328,50 @@
         /**
          * Get the ordering details
          *
-         * @returns {{order_by: *, order: *}}
+         * @returns {{orderBy: *, order: *}}
          * @private
          */
-        _getOrdering: function() {
+        _getOrdering: function () {
             // cache DOM sort for better performance
             var uiSort = uiMainContainer.find(config.sort);
 
             if (!helper.isValidUI(uiSort)) {
                 // stop if sort DOM not found and return data
-                return { 'order_by': null, 'order': null };
+                return {orderBy: null, order: null};
             }
 
             var uiSorter = uiSort.children('li.active');
 
             return {
-                'order_by': uiSorter.attr('data-field'),
-                'order'   : uiSorter.attr('data-sort')
+                orderBy: uiSorter.attr('data-field'),
+                order   : uiSorter.attr('data-sort')
             };
+        },
+
+        /**
+         * Gets the length of shown children of the container
+         *
+         * @returns {Number} The number of shown children of the container
+         * @private
+         * @todo Should put a selector in the children of the container for specificity and for more flexibity of the program
+         */
+        _getOffset: function () {
+            return uiMainContainer.find(config.container).children().not(config.template).length;
+        },
+
+        /**
+         * Set the value of search input from the previous searched item.
+         *
+         * @private
+         */
+        _setSearchValue: function () {
+            var uiSearch = uiMainContainer.find(config.search.input),
+                sDataSearch = uiSearch.attr('data-searched');
+
+            if(sDataSearch !== undefined && sDataSearch.length) {
+                // set the value of search input to it's data-searched (previous searched)
+                uiSearch.val(sDataSearch);
+            }
         }
     };
 
@@ -320,15 +383,17 @@
          *
          * @returns {number} Length of an oObject
          */
-        lengthOf: function(oObject) {
-            if(oObject === undefined && typeof oObject !== 'object') {
+        lengthOf: function (oObject) {
+            if (oObject === undefined && typeof oObject !== 'object') {
                 return 0; // stop here if oObject is not defined
             }
 
             var size = 0, key;
 
             for (key in oObject) {
-                if (oObject.hasOwnProperty(key)) size++;
+                if (oObject.hasOwnProperty(key)) {
+                    size++;
+                }
             }
 
             return size;
@@ -354,9 +419,11 @@
      * @returns {jQuery}
      * @constructor
      */
-    $.fn.cloneFiltering = function(options) {
+    $.fn.cloneFiltering = function (options) {
 
-        if (!this[0]) return this; // stop here if main container not found
+        if (!this[0]) {
+            return this; // stop here if main container not found
+        }
 
         uiMainContainer = this; // put the main container to the private variable for whole scope availability
 
