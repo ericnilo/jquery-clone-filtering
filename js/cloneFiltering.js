@@ -13,7 +13,6 @@
  *                                                                  if url is set do not use this
  *          limit: 10,                              // (OPTIONAL) Will be using in load more
  *          loadMore: 'button.load_more',           // (OPTIONAL) Selector of the load more button MUST BE A BUTTON
- *          sort: 'ul.sort',                        // (OPTIONAL) Selector of the sort
  *          search: {                               // (OPTIONAL) Selector of the search input MUST BE AN INPUT
  *              input: {
  *                  selector: 'input.search',
@@ -21,6 +20,10 @@
  *              },
  *              btn: 'div.search_btn'
  *          },
+ *          sort: {                                 // (OPTIONAL) Selector of the sort
+ *              selector: 'ul.sort',                // if sort has been set this selector is required
+ *              activeClass: 'active sorting'       // if not set the default active class would be the 'active sorting'
+ *          }
  *      });
  *
  * @todo: No documentation yet.
@@ -36,14 +39,14 @@
         ui          : 'DOM not found or do not exists!',
         objectFormat: 'Format of the object is invalid. Format should be:' +
                     '{ ' +
-                    'data:' +
-                    '{ 0:' +
-                    '{ any: "value" }' +
-                    '{ any: "value" }' +
-                    '...' +
-                    '},' +
-                    '...' +
-                    'total_rows: 10' +
+                        'data:' +
+                            '{ 0:' +
+                                '{ any: "value" }' +
+                                '{ any: "value" }' +
+                                '...' +
+                            '},' +
+                             '...' +
+                        'total_rows: 10' +
                     '}'
     };
 
@@ -122,6 +125,14 @@
                             process.search();
                         });
                     }
+
+                    // check if config.sort has 'selector'
+                    if(config.sort.hasOwnProperty('selector')) {
+
+                        process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
+                            process.sort(e);
+                        });
+                    }
                 }
             }
         }
@@ -134,16 +145,16 @@
          */
         search: function () {
             var uiSearch = uiMainContainer.find(config.search.input.selector),
-                sOrder = process._getOrdering(),
+                oOrder = process._getOrdering(),
                 oData = {
                     'keyword' : uiMainContainer.find(config.search.input.selector).val(),
-                    'order_by': sOrder.orderBy,
-                    'order'   : sOrder.order
+                    'order_by': oOrder.orderBy,
+                    'order'   : oOrder.order
                 };
 
             // remove the children of the container
             // also make sure the template is not remove
-            uiMainContainer.find(config.container).children().not(config.template).remove();
+            process._removeChildrenOfContainer();
 
             // Process ajax
             process._ajax(config.url, oData, function () {
@@ -156,15 +167,57 @@
          *
          */
         loadMore: function () {
-            var sOrder = process._getOrdering(),
+            var oOrder = process._getOrdering(),
                 oData = {
                     'keyword' : process._getPrevSearched(),
                     'offset'  : process._getOffset(),
-                    'order_by': sOrder.orderBy,
-                    'order'   : sOrder.order
+                    'order_by': oOrder.orderBy,
+                    'order'   : oOrder.order
                 };
 
+            // put previous searched value in the search input
             process._setSearchValue();
+
+            process._ajax(config.url, oData, function (oRetData) {
+                process._loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
+            });
+        },
+
+        sort: function (e) {
+            var uiTarget = uiMainContainer.find(e.target), oData, oOrder,
+                sActiveClass = (config.sort.activeClass !== undefined) ?
+                               config.sort.activeClass : 'active sorting';
+
+            if (uiTarget.hasClass(sActiveClass)) {
+                if (uiTarget.attr('data-sort') === 'asc') {
+                    uiTarget.attr('data-sort', 'desc');
+                } else {
+                    uiTarget.attr('data-sort', 'asc');
+                }
+            } else {
+                uiTarget
+                    .addClass(sActiveClass)
+                    .attr('data-sort', 'asc')
+                    .siblings("li")
+                    .removeClass(sActiveClass).removeAttr('data-sort');
+            }
+
+            // put previous searched value in the search input
+            process._setSearchValue();
+
+            // get order
+            oOrder = process._getOrdering();
+
+            // assign value in oData
+            oData = {
+                'keyword' : process._getPrevSearched(),
+                'order_by': oOrder.orderBy,
+                'order'   : oOrder.order
+            };
+
+            // remove the children of the container
+            // also make sure the template is not remove
+            process._removeChildrenOfContainer();
 
             process._ajax(config.url, oData, function (oRetData) {
                 process._loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
@@ -181,7 +234,7 @@
         _loadMoreShowHide: function (numTotalRows, numUIRows) {
             var uiLoadMore = uiMainContainer.find(config.loadMore);
 
-            uiLoadMore.text('Load More');
+            uiLoadMore.text('Load More'); // TODO: This should be check if it is a button or other tag because what if load more is an input then text will not be suitable for it.
 
             if (numTotalRows === numUIRows || numTotalRows <= config.limit || numUIRows > numTotalRows) {
                 uiLoadMore.hide();
@@ -189,6 +242,16 @@
                 // show again the load more button if it is hidden
                 uiLoadMore.show();
             }
+        },
+
+        /**
+         * Remove the children of the container and also
+         *  make sure the template is not remove if in case template is inside the container
+         *
+         * @private
+         */
+        _removeChildrenOfContainer: function () {
+            uiMainContainer.find(config.container).children().not(config.template).remove();
         },
 
         /**
@@ -343,7 +406,7 @@
             var uiSorter = uiSort.children('li.active');
 
             return {
-                orderBy: uiSorter.attr('data-field'),
+                orderBy: uiSorter.attr('data-sort-field'),
                 order   : uiSorter.attr('data-sort')
             };
         },

@@ -5,6 +5,13 @@
     <title>Clone Filtering Test</title>
 </head>
 <body id="main_container">
+
+    <ul id="sorter">
+        <li>ID</li>
+        <li>First Name</li>
+        <li>Last Name</li>
+    </ul>
+
     <input type="text" class="search" placeholder="search">
     <button type="button" class="search_btn">Search</button>
     <ul id="container">
@@ -44,7 +51,10 @@
                 },
                 btn  : 'button.search_btn'
             },
-            loadMore: '#load_more_btn'
+            loadMore: '#load_more_btn',
+            sort: {
+                selector: '#sorter'
+            }
         })
     });
 </script>
