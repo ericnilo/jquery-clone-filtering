@@ -5,7 +5,7 @@
  *          container: '#container',                // (REQUIRED) Container of the template to be inserted
  *          template: '#template',                  // (REQUIRED) Template to be cloned
  *          url: 'localhost/ajax/get_something',    // (OPTIONAL) URL of the data needed for the cloning and filtering
- *          csrf_token: {                           // (OPTIONAL) For security reason
+ *          csrfToken: {                            // (OPTIONAL) For security reason
  *              value: 'x5925626lsd62',
  *              name: 'my_token'
  *          },
@@ -72,6 +72,13 @@
         template : '#template',
         limit    : 10
     };
+
+    /**
+     * Storage of the active class
+     *
+     * @type {string}
+     */
+    var sActiveClass = '';
 
     var init = function (options) {
         config = $.extend(defaults, options);
@@ -184,9 +191,10 @@
         },
 
         sort: function (e) {
-            var uiTarget = uiMainContainer.find(e.target), oData, oOrder,
-                sActiveClass = (config.sort.activeClass !== undefined) ?
-                               config.sort.activeClass : 'active sorting';
+            var uiTarget = uiMainContainer.find(e.target), oData, oOrder;
+
+            sActiveClass = (config.sort.activeClass !== undefined) ?
+                           config.sort.activeClass : 'active sorting';
 
             if (uiTarget.hasClass(sActiveClass)) {
                 if (uiTarget.attr('data-sort') === 'asc') {
@@ -326,6 +334,11 @@
          * @private
          */
         _ajax: function (sUrl, oData, fnAdditionalCallback) {
+            // check if csrf_token is set
+            if(helper.lengthOf(config.csrfToken)) {
+                oData[config.csrfToken.name] = config.csrfToken.value;
+            }
+
             $.ajax(sUrl, {
                 type   : 'POST',
                 data   : oData,
@@ -396,18 +409,17 @@
          */
         _getOrdering: function () {
             // cache DOM sort for better performance
-            var uiSort = uiMainContainer.find(config.sort);
+            var sProcessedClass = helper.classBuilder(sActiveClass),
+                uiSort = uiMainContainer.find(sProcessedClass);
 
             if (!helper.isValidUI(uiSort)) {
                 // stop if sort DOM not found and return data
                 return {orderBy: null, order: null};
             }
 
-            var uiSorter = uiSort.children('li.active');
-
             return {
-                orderBy: uiSorter.attr('data-sort-field'),
-                order   : uiSorter.attr('data-sort')
+                orderBy: uiSort.attr('data-sort-field'),
+                order   : uiSort.attr('data-sort')
             };
         },
 
@@ -471,6 +483,25 @@
          */
         isValidUI: function (ui) {
             return (ui !== undefined && ui.length > 0);
+        },
+
+        /**
+         * Build the class so that it will have a dot(.) sign in the beginning of each
+         *
+         * @param {String} sClasses Space Concatenated classes. Example 'active sorting'
+         *
+         * @returns {String} Returns a concatenated class. Example '.active.sorting'
+         */
+        classBuilder: function (sClasses) {
+            var sReturnClass = '',
+                arrClasses = [];
+
+            if(sClasses !== undefined && sClasses.trim().length > 0) {
+                arrClasses = sClasses.trim().split(' ');
+                sReturnClass = '.' + arrClasses.join('.');
+            }
+
+            return sReturnClass;
         }
     };
 

@@ -7,9 +7,9 @@
 <body id="main_container">
 
     <ul id="sorter">
-        <li>ID</li>
-        <li>First Name</li>
-        <li>Last Name</li>
+        <li data-sort-field="id">ID</li>
+        <li data-sort-field="fname">First Name</li>
+        <li data-sort-field="lname">Last Name</li>
     </ul>
 
     <input type="text" class="search" placeholder="search">
@@ -42,18 +42,22 @@
 <script>
     $(function () {
         $('#main_container').cloneFiltering({
-            url: 'ajax/get_employee_list.php',
+            url      : 'ajax/get_employee_list.php',
             container: '#container',
             template : '[data-template="employee-list"]',
-            search: {
+            search   : {
                 input: {
-                    selector : 'input.search'
+                    selector: 'input.search'
                 },
                 btn  : 'button.search_btn'
             },
-            loadMore: '#load_more_btn',
-            sort: {
+            loadMore : '#load_more_btn',
+            sort     : {
                 selector: '#sorter'
+            },
+            csrfToken: {
+                name : 'my_token',
+                value: 'x5925626lsd62'
             }
         })
     });
