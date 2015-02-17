@@ -79,7 +79,7 @@
      */
     var defaults = {
         container: '#container',
-        template : '#template',
+        template : '[data-template="my_template"]',
         limit    : 10
     };
 
@@ -98,7 +98,7 @@
             uiTemplate = uiMainContainer.find(config.template);
 
         // uiContainer && uiTemplate should be present so validate this
-        if (!helper.isValidUI(uiContainer) && !helper.isValidUI(uiTemplate)) {
+        if (!helper.isValid(uiContainer) && !helper.isValid(uiTemplate)) {
             return config.container + ' and ' + config.template + ' ' + ERROR_MSG.ui; // stop if the two is not found
         }
 
@@ -109,7 +109,7 @@
 
         // if url is defined then one of the following should also be defined:
         // config.sort, config.loadMore or config.search
-        else if (config.url !== undefined) {
+        else if (helper.isValidKey(config, 'url')) {
 
             // check if config has 'loadMore'
             if (helper.isValidKey(config, 'loadMore')) {
@@ -134,7 +134,7 @@
 
                     // check if config.search.input has 'selector'
                     if (helper.isValidKey(config.search.input, 'selector')) {
-                        var sEventType = (config.search.input.eventType !== undefined) ?
+                        var sEventType = (helper.isValidKey(config.search.input, 'eventType')) ?
                                          config.search.input.eventType : 'keypress';
 
                         process._attachEvent(config.search.input.selector, sEventType, function (e) {
@@ -462,7 +462,7 @@
             var sProcessedClass = helper.classBuilder(sActiveClass),
                 uiSort = uiMainContainer.find(sProcessedClass);
 
-            if (!helper.isValidUI(uiSort)) {
+            if (!helper.isValid(uiSort)) {
                 // stop if sort DOM not found and return data
                 return {orderBy: null, order: null};
             }
@@ -491,11 +491,11 @@
          * @private
          */
         _setSearchValue: function () {
-            if(helper.isValidKey(config, 'search') && helper.isValidKey(config.search, 'input')) { // TODO: need to verify this for better maintainabilty
+            if(helper.isValidKey(config, 'search') && helper.isValidKey(config.search, 'input')) {
                 var uiSearch = uiMainContainer.find(config.search.input),
                     sDataSearch = uiSearch.attr('data-searched');
 
-                if(sDataSearch !== undefined && sDataSearch.length) {
+                if (helper.isValid(sDataSearch)) {
                     // set the value of search input to it's data-searched (previous searched)
                     uiSearch.val(sDataSearch);
                 }
@@ -547,14 +547,14 @@
         },
 
         /**
-         * Validates ui if exist or not
+         * Validates data if exist or not
          *
-         * @param {Object} ui jQuery Object
+         * @param data Mixed data type
          *
          * @returns {Boolean} True if found
          */
-        isValidUI: function (ui) {
-            return (ui !== undefined && ui.length > 0);
+        isValid: function (data) {
+            return (data !== undefined && data.length > 0);
         },
 
         /**
