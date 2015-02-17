@@ -4,13 +4,15 @@
  *      .cloneFiltering({
  *          container: '#container',                // (REQUIRED) Container of the template to be inserted
  *          template: '[data-template="template"]', // (REQUIRED) Template to be cloned
- *          url: 'localhost/ajax/get_something',    // (OPTIONAL) URL of the data needed for the cloning and filtering
- *          customAjax: function(oSettings){        // (OPTIONAL) Will override the default ajax in this plugin
- *              myCustomAjax(oSettings)
- *          },
- *          csrfToken: {                            // (OPTIONAL) For security reason
- *              value: 'x5925626lsd62',
- *              name: 'my_token'
+ *          ajax: {
+ *              url: 'localhost/ajax/get_something',// (OPTIONAL) URL of the data needed for the cloning and filtering
+ *              customAjax: function(oSettings){    // (OPTIONAL) Will override the default ajax in this plugin
+ *                  myCustomAjax(oSettings)
+ *              },
+ *              csrfToken: {                        // (OPTIONAL) For security reason
+ *                  value: 'x5925626lsd62',
+ *                  name: 'my_token'
+ *              },
  *          },
  *          data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                  if url is set do not use this
@@ -502,6 +504,70 @@
             }
         }
     };
+
+    /**
+     * Validates configuration settings options
+     *
+     */
+    var validate = {
+        container: function () {
+            return helper.isValidKey(config, 'container');
+        },
+        template : function () {
+            return helper.isValidKey(config, 'template');
+        },
+        ajax     : {
+            url       : function () {
+                return helper.isValidKey(config.ajax, 'url');
+            },
+            customAjax: function () {
+                return helper.isValidKey(config.ajax, 'customAjax') && typeof config.ajax.customAjax === "function";
+            },
+            csrfToken : {
+                value: function () {
+                    return this._csrfToken() && helper.isValidKey(config.ajax.csrfToken, 'value');
+                },
+                name : function () {
+                    return this._csrfToken() && helper.isValidKey(config.ajax.csrfToken, 'name');
+                }
+            },
+            _csrfToken: function () {
+                return validate._ajax() && helper.isValidKey(config.ajax, 'csrfToken');
+            }
+        },
+        _ajax    : function () {
+            return helper.isValidKey(config, 'ajax');
+        },
+        data     : function () {
+            return helper.isValidKey(config, 'data');
+        },
+        limit    : function () {
+            return helper.isValidKey(config, 'limit');
+        },
+        loadMore : function () {
+            return helper.isValidKey(config, 'loadMore');
+        },
+        search   : {
+            input : {
+                selector : function () {
+                    return this._input() && helper.isValidKey(config.input, 'selector');
+                },
+                eventType: function () {
+                    return this._input() && helper.isValidKey(config.input, 'eventType');
+                }
+            },
+            btn   : function () {
+                return this._input() && helper.isValidKey(config.search, 'btn');
+            },
+            _input: function () {
+                return validate._search() && helper.isValidKey(config.search, 'input');
+            }
+        },
+        _search  : function () {
+            return helper.isValidKey(config, 'search');
+        }
+    };
+
 
     var helper = {
         /**
