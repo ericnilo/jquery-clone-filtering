@@ -558,7 +558,7 @@
         },
 
         /**
-         * Check if the object has a proper or valid structure
+         * Check if the object has a proper or valid key
          *
          * @param {Object} oObject  Object to be validated
          * @param {String} sKey     Key of the object to find if available
