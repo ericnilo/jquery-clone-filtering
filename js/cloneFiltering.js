@@ -3,7 +3,7 @@
  * $('#main_container')                             // Container of the load more, search, and sort
  *      .cloneFiltering({
  *          container: '#container',                // (REQUIRED) Container of the template to be inserted
- *          template: '#template',                  // (REQUIRED) Template to be cloned
+ *          template: '[data-template="template"]', // (REQUIRED) Template to be cloned
  *          url: 'localhost/ajax/get_something',    // (OPTIONAL) URL of the data needed for the cloning and filtering
  *          customAjax: function(oSettings){        // (OPTIONAL) Will override the default ajax in this plugin
  *              myCustomAjax(oSettings)
