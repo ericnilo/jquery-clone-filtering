@@ -26,6 +26,13 @@
  *          sort: {                                 // (OPTIONAL) Selector of the sort
  *              selector: 'ul.sort',                // if sort has been set this selector is required
  *              activeClass: 'active sorting'       // if not set the default active class would be the 'active sorting'
+ *          },
+ *          customFieldValue:                       // (OPTIONAL) Put the custom field in this code default setter is for class, text and value
+ *              function (uiClonedTemplate, oInsertData) {
+ *                  if(key === 'link_location') {
+                        uiClonedTemplate.attr('onclick', oInsertData['link_location']);
+ *                  }
+ *              }
  *          }
  *      });
  *
@@ -278,13 +285,13 @@
         },
 
         /**
-         * Set field value, text, or class
+         * Set field value, text, or class or via custom field using config.customFieldValue property
          *
-         * @param {Object} uiClonedTemplate
-         * @param {Object} oInsertData
-         * @private
+         * @param {Object} uiClonedTemplate Cloned template that will be appended to the DOM container
+         * @param {Object} oInsertData      Data that need to be passed to the cloned template
+         *
          */
-        _setFieldValue: function (uiClonedTemplate, oInsertData) {
+        setFieldValue: function (uiClonedTemplate, oInsertData) {
             for (var key in oInsertData) {
                 if (oInsertData.hasOwnProperty(key)) {
                     // set class of specific DOM
@@ -296,9 +303,11 @@
                     // set value of input field
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
 
-                    // set the onclick of a field
-                    if(key === 'link_location') {
-                        uiClonedTemplate.attr('onclick', oInsertData[key]);
+                    // set the custom field value of cloned template for extendability
+                    if (helper.isValidObject(config, 'customFieldValue') &&
+                        typeof config.customFieldValue === "function"
+                    ) {
+                        config.customFieldValue(uiClonedTemplate, oInsertData);
                     }
                 }
             }
@@ -325,7 +334,7 @@
                     uiClonedTemplate = uiMainContainer.find(config.template).clone();
 
                     // set field value, text or class
-                    this._setFieldValue(uiClonedTemplate, oData.data[key]);
+                    this.setFieldValue(uiClonedTemplate, oData.data[key]);
 
                     // remove the custom attribute of the cloned template and append it to the container
                     uiClonedTemplate
