@@ -15,7 +15,7 @@
  *          data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                  if url is set do not use this
  *          limit: 10,                              // (OPTIONAL) Will be using in load more
- *          loadMore: 'button.load_more',           // (OPTIONAL) Selector of the load more button MUST BE A BUTTON
+ *          loadMore: '.load_more',                 // (OPTIONAL) Selector of the load more. For now it only support non input button
  *          search: {                               // (OPTIONAL) Selector of the search input MUST BE AN INPUT
  *              input: {
  *                  selector: 'input.search',
