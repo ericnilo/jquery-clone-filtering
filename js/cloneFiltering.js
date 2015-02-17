@@ -112,14 +112,14 @@
         else if (config.url !== undefined) {
 
             // check if config has 'loadMore'
-            if (helper.isValidObject(config, 'loadMore')) {
+            if (helper.isValidKey(config, 'loadMore')) {
                 process._attachEvent(config.loadMore, 'click', function () {
                     process.loadMore();
                 });
             }
 
             // check if config.sort has 'selector'
-            if (helper.isValidObject(config, 'sort') && helper.isValidObject(config.sort, 'selector')) {
+            if (helper.isValidKey(config, 'sort') && helper.isValidKey(config.sort, 'selector')) {
                 process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
                     process.sort(e);
                 });
@@ -130,10 +130,10 @@
             if (helper.lengthOf(config.search)) {
 
                 // check if config.search has 'input' property
-                if (helper.isValidObject(config.search, 'input')) {
+                if (helper.isValidKey(config.search, 'input')) {
 
                     // check if config.search.input has 'selector'
-                    if (helper.isValidObject(config.search.input, 'selector')) {
+                    if (helper.isValidKey(config.search.input, 'selector')) {
                         var sEventType = (config.search.input.eventType !== undefined) ?
                                          config.search.input.eventType : 'keypress';
 
@@ -145,7 +145,7 @@
                     }
 
                     // check if config.search has 'btn'
-                    if (helper.isValidObject(config.search, 'btn')) {
+                    if (helper.isValidKey(config.search, 'btn')) {
                         process._attachEvent(config.search.btn, 'click', function () {
                             process.search();
                         });
@@ -304,7 +304,7 @@
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
 
                     // set the custom field value of cloned template for extendability
-                    if (helper.isValidObject(config, 'customFieldValue') &&
+                    if (helper.isValidKey(config, 'customFieldValue') &&
                         typeof config.customFieldValue === "function"
                     ) {
                         config.customFieldValue(uiClonedTemplate, oInsertData, key);
@@ -429,16 +429,23 @@
          * @private
          */
         _getPrevSearched: function () {
-            var uiInputSearch = uiMainContainer.find(config.search.input.selector),
-                sSearchedKeyword = uiInputSearch.attr('data-searched'),
-                sReturnVal = '';
+            var sReturnVal = '';
+            if(helper.isValidKey(config, 'search') &&
+               helper.isValidKey(config.search, 'input') &&
+               helper.isValidKey(config.search.input, 'selector')
+            ){
+                var uiInputSearch = uiMainContainer.find(config.search.input.selector),
+                    sSearchedKeyword = uiInputSearch.attr('data-searched');
 
-            if (sSearchedKeyword !== undefined) {
-                sReturnVal = sSearchedKeyword.trim();
+                if (sSearchedKeyword !== undefined) {
+                    sReturnVal = sSearchedKeyword.trim();
+                }
+
+                // set the value of search
+                uiInputSearch.val(sReturnVal);
+
+                return sReturnVal;
             }
-
-            // set the value of search
-            uiInputSearch.val(sReturnVal);
 
             return sReturnVal;
         },
@@ -484,12 +491,14 @@
          * @private
          */
         _setSearchValue: function () {
-            var uiSearch = uiMainContainer.find(config.search.input),
-                sDataSearch = uiSearch.attr('data-searched');
+            if(helper.isValidKey(config, 'search') && helper.isValidKey(config.search, 'input')) { // TODO: need to verify this for better maintainabilty
+                var uiSearch = uiMainContainer.find(config.search.input),
+                    sDataSearch = uiSearch.attr('data-searched');
 
-            if(sDataSearch !== undefined && sDataSearch.length) {
-                // set the value of search input to it's data-searched (previous searched)
-                uiSearch.val(sDataSearch);
+                if(sDataSearch !== undefined && sDataSearch.length) {
+                    // set the value of search input to it's data-searched (previous searched)
+                    uiSearch.val(sDataSearch);
+                }
             }
         }
     };
@@ -556,7 +565,7 @@
          *
          * @returns {boolean}
          */
-        isValidObject: function (oObject, sKey) {
+        isValidKey: function (oObject, sKey) {
             return helper._isValidObject(oObject) && oObject.hasOwnProperty(sKey);
         },
 
