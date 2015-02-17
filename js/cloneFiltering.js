@@ -104,22 +104,29 @@
         // config.sort, config.loadMore or config.search
         else if (config.url !== undefined) {
 
+            // check if config has 'loadMore'
+            if (helper.isValidObject(config, 'loadMore')) {
+                process._attachEvent(config.loadMore, 'click', function () {
+                    process.loadMore();
+                });
+            }
+
+            // check if config.sort has 'selector'
+            if (helper.isValidObject(config, 'sort') && helper.isValidObject(config.sort, 'selector')) {
+                process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
+                    process.sort(e);
+                });
+            }
+
+
             // check first if config.search is an object and has at least one element in it
             if (helper.lengthOf(config.search)) {
 
                 // check if config.search has 'input' property
-                if (config.search.hasOwnProperty('input')) {
+                if (helper.isValidObject(config.search, 'input')) {
 
-                    // check if config has 'loadMore'
-                    if (config.hasOwnProperty('loadMore')) {
-                        process._attachEvent(config.loadMore, 'click', function () {
-                            process.loadMore();
-                        });
-                    }
-
-                    // TODO: no structure validation yet in search, sort and etc.
                     // check if config.search.input has 'selector'
-                    if (config.search.input.hasOwnProperty('selector')) {
+                    if (helper.isValidObject(config.search.input, 'selector')) {
                         var sEventType = (config.search.input.eventType !== undefined) ?
                                          config.search.input.eventType : 'keypress';
 
@@ -131,16 +138,9 @@
                     }
 
                     // check if config.search has 'btn'
-                    if (config.search.hasOwnProperty('btn')) {
+                    if (helper.isValidObject(config.search, 'btn')) {
                         process._attachEvent(config.search.btn, 'click', function () {
                             process.search();
-                        });
-                    }
-
-                    // check if config.sort has 'selector'
-                    if(config.sort.hasOwnProperty('selector')) {
-                        process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
-                            process.sort(e);
                         });
                     }
                 }
@@ -240,6 +240,7 @@
          *
          * @param {Number} numTotalRows
          * @param {Number} numUIRows
+         *
          * @private
          */
         _loadMoreShowHide: function (numTotalRows, numUIRows) {
@@ -307,6 +308,7 @@
          * Clone the template and append it to container
          *
          * @param {Object} oData  Note: This should have a valid format. Pls refer to ERROR_MSG.objectFormat
+         *
          * @returns {String|Null} If this function returns string, cloning failed
          * @private
          */
@@ -336,10 +338,11 @@
         /**
          * Ajax Processing function
          *
-         * @param {String} sUrl
-         * @param {Object} oData
-         * @param [fnAdditionalCallback]
-         * @param [fnBeforeCloning]      Function that will be called before cloning
+         * @param {String}  sUrl                   URL destination
+         * @param {Object}  oData                  Data to be sent to server
+         * @param           [fnAdditionalCallback] Function that will be called after cloning
+         * @param           [fnBeforeCloning]      Function that will be called before cloning
+         *
          * @private
          */
         _ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
@@ -393,6 +396,7 @@
          * @param {String} sSelector
          * @param {String} sEventType
          * @param fnCallback
+         *
          * @private
          */
         _attachEvent: function (sSelector, sEventType, fnCallback) {
@@ -412,6 +416,7 @@
          * and additionally set the value of the input from the prev keyword
          *
          * @return String
+         *
          * @private
          */
         _getPrevSearched: function () {
@@ -433,6 +438,7 @@
          * Get the ordering details
          *
          * @returns {{orderBy: *, order: *}}
+         *
          * @private
          */
         _getOrdering: function () {
@@ -455,6 +461,7 @@
          * Gets the length of shown children of the container
          *
          * @returns {Number} The number of shown children of the container
+         *
          * @private
          * @todo Should put a selector in the children of the container for specificity and for more flexibity of the program
          */
@@ -487,8 +494,8 @@
          * @returns {number} Length of an oObject
          */
         lengthOf: function (oObject) {
-            if (oObject === undefined && typeof oObject !== 'object') {
-                return 0; // stop here if oObject is not defined
+            if (! helper._isValidObject(oObject)) {
+                return 0; // stop here if oObject is not defined or not an object
             }
 
             var size = 0, key;
@@ -500,17 +507,6 @@
             }
 
             return size;
-        },
-
-        /**
-         * Validates ui if exist or not
-         *
-         * @param {Object} ui jQuery Object
-         *
-         * @returns {Boolean} True if found
-         */
-        isValidUI: function (ui) {
-            return (ui !== undefined && ui.length > 0);
         },
 
         /**
@@ -530,6 +526,42 @@
             }
 
             return sReturnClass;
+        },
+
+        /**
+         * Validates ui if exist or not
+         *
+         * @param {Object} ui jQuery Object
+         *
+         * @returns {Boolean} True if found
+         */
+        isValidUI: function (ui) {
+            return (ui !== undefined && ui.length > 0);
+        },
+
+        /**
+         * Check if the object has a proper or valid structure
+         *
+         * @param {Object} oObject  Object to be validated
+         * @param {String} sKey     Key of the object to find if available
+         *
+         * @returns {boolean}
+         */
+        isValidObject: function (oObject, sKey) {
+            return helper._isValidObject(oObject) && oObject.hasOwnProperty(sKey);
+        },
+
+        /**
+         * Check if object is an object in defined
+         *
+         * @param oObject
+         *
+         * @returns {boolean}
+         *
+         * @private
+         */
+        _isValidObject: function(oObject) {
+            return (oObject !== undefined && typeof oObject === 'object');
         }
     };
 
@@ -539,6 +571,7 @@
      * @param {Object} options Options of the plugin
      *
      * @returns {jQuery}
+     *
      * @constructor
      */
     $.fn.cloneFiltering = function (options) {
