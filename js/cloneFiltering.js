@@ -28,7 +28,7 @@
  *              activeClass: 'active sorting'       // if not set the default active class would be the 'active sorting'
  *          },
  *          customFieldValue:                       // (OPTIONAL) Put the custom field in this code default setter is for class, text and value
- *              function (uiClonedTemplate, oInsertData) {
+ *              function (uiClonedTemplate, oInsertData, key) {
  *                  if(key === 'link_location') {
                         uiClonedTemplate.attr('onclick', oInsertData['link_location']);
  *                  }
@@ -307,7 +307,7 @@
                     if (helper.isValidObject(config, 'customFieldValue') &&
                         typeof config.customFieldValue === "function"
                     ) {
-                        config.customFieldValue(uiClonedTemplate, oInsertData);
+                        config.customFieldValue(uiClonedTemplate, oInsertData, key);
                     }
                 }
             }
