@@ -79,7 +79,7 @@
      */
     var defaults = {
         container: '#container',
-        template : '#template',
+        template : '[data-template="my_template"]',
         limit    : 10
     };
 
