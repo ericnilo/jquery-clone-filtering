@@ -5,6 +5,9 @@
  *          container: '#container',                // (REQUIRED) Container of the template to be inserted
  *          template: '#template',                  // (REQUIRED) Template to be cloned
  *          url: 'localhost/ajax/get_something',    // (OPTIONAL) URL of the data needed for the cloning and filtering
+ *          customAjax: function(oSettings){        // (OPTIONAL) Will override the default ajax in this plugin
+ *              myCustomAjax(oSettings)
+ *          },
  *          csrfToken: {                            // (OPTIONAL) For security reason
  *              value: 'x5925626lsd62',
  *              name: 'my_token'
@@ -291,6 +294,11 @@
 
                     // set value of input field
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
+
+                    // set the onclick of a field
+                    if(key === 'link_location') {
+                        uiClonedTemplate.attr('onclick', oInsertData[key]);
+                    }
                 }
             }
         },
@@ -335,7 +343,7 @@
          * @private
          */
         _ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
-            var oSettings = {};
+            var oSettings;
 
             // check if csrf_token is set
             if(helper.lengthOf(config.csrfToken)) {
@@ -365,6 +373,9 @@
                                 fnAdditionalCallback(oRetData);
                             }
                         }
+                        else {
+                            process._removeChildrenOfContainer();
+                        }
                     }
                 }
             };
@@ -387,7 +398,9 @@
         _attachEvent: function (sSelector, sEventType, fnCallback) {
             uiMainContainer.find(sSelector).on(sEventType, function (e) {
                 e.stopPropagation();
-                e.preventDefault();
+                if(sEventType === 'click') {
+                    e.preventDefault();
+                }
                 if (typeof fnCallback === 'function') {
                     fnCallback(e);
                 }
