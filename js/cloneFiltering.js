@@ -340,10 +340,8 @@
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
 
                     // set the custom field value of cloned template for extendability
-                    if (helper.hasValidKey(config, 'customFieldValue') &&
-                        typeof config.customFieldValue === "function"
-                    ) {
-                        config.customFieldValue(uiClonedTemplate, oInsertData, key);
+                    if (validateConfig('config.clone.customFieldValue', 'function')) {
+                        config.clone.customFieldValue(uiClonedTemplate, oInsertData, key);
                     }
                 }
             }
@@ -557,7 +555,7 @@
      * @return {Boolean} True if config matches the valid data type
      */
     var validateConfig = function (sConfig, sDataType, sVarConfigName) {
-        var arrConfig = sConfig.split('.'), key, sLastElementVal,
+        var arrConfig = sConfig.split('.'), sLastElementVal,
             oConfig = config;
 
         sVarConfigName = (sVarConfigName !== undefined) ? sVarConfigName : 'config';
@@ -575,18 +573,16 @@
         // if arrConfig has more than 2 elements then loop through it until sLastElementVal matches
         // then return true if it matches the supplied data type
         if (arrConfig.length > 1) {
-            for (key in arrConfig) {
-                if (arrConfig.hasOwnProperty(key)) {
-                    if (arrConfig[key] === sLastElementVal) {
-                        return (sDataType === 'object') ?
-                               (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
-                               typeof oConfig[sLastElementVal] === sDataType;   // else
+            for(var i = 0; i < arrConfig.length; i++) {
+                if (arrConfig[i] === sLastElementVal) {
+                    return (sDataType === 'object') ?
+                           (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
+                           typeof oConfig[sLastElementVal] === sDataType;   // else
+                } else {
+                    if (helper.hasValidKey(oConfig, arrConfig[i])) {
+                        oConfig = oConfig[arrConfig[i]];
                     } else {
-                        if (helper.hasValidKey(oConfig, arrConfig[key])) {
-                            oConfig = oConfig[arrConfig[key]];
-                        } else {
-                            return false;
-                        }
+                        return false;
                     }
                 }
             }
