@@ -340,10 +340,8 @@
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
 
                     // set the custom field value of cloned template for extendability
-                    if (helper.hasValidKey(config, 'customFieldValue') &&
-                        typeof config.customFieldValue === "function"
-                    ) {
-                        config.customFieldValue(uiClonedTemplate, oInsertData, key);
+                    if (validateConfig('config.clone.customFieldValue', 'function')) {
+                        config.clone.customFieldValue(uiClonedTemplate, oInsertData, key);
                     }
                 }
             }
@@ -557,7 +555,7 @@
      * @return {Boolean} True if config matches the valid data type
      */
     var validateConfig = function (sConfig, sDataType, sVarConfigName) {
-        var arrConfig = sConfig.split('.'), key, sLastElementVal,
+        var arrConfig = sConfig.split('.'), sLastElementVal,
             oConfig = config;
 
         sVarConfigName = (sVarConfigName !== undefined) ? sVarConfigName : 'config';
