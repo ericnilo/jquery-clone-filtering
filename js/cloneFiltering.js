@@ -5,40 +5,45 @@
  *
  * $('#main_container')                             // Container of the load more, search, and sort
  *      .cloneFiltering({
- *          container: '#container',                // (REQUIRED) Container of the template to be inserted
- *          template: '[data-template="template"]', // (REQUIRED) Template to be cloned. Custom attribute must be data-template
- *          ajax: {
- *              url: 'localhost/ajax/get_something',// (OPTIONAL) URL of the data needed for the cloning and filtering
- *              customAjax: function(oSettings){    // (OPTIONAL) Will override the default ajax in this plugin
- *                  myCustomAjax(oSettings)
- *              },
- *              csrfToken: {                        // (OPTIONAL) For security reason
- *                  value: 'x5925626lsd62',
- *                  name: 'my_token'
- *              },
- *              complete: function() {              // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
+ *          clone: {
+ *              container: '#container',                // (REQUIRED) Container of the template to be inserted
+ *              template: '[data-template="template"]', // (REQUIRED) Template to be cloned. Custom attribute must be data-template
+ *              data: oData,                            // (OPTIONAL) If from ajax success this is required
+ *                                                                      if url is set do not use this
+ *                                                                      ,
+ *              customFieldValue:                       // (OPTIONAL) Put the custom field in this code default setter is for class, text and value
+ *                  function (uiClonedTemplate, oInsertData, key) {
+ *                      if(key === 'link_location') {
+ *                          uiClonedTemplate.attr('onclick', oInsertData['link_location']);
+ *                      }
+ *                  }
  *              }
  *          },
- *          data: oData,                            // (OPTIONAL) If from ajax success this is required
- *                                                                  if url is set do not use this
- *          limit: 10,                              // (OPTIONAL) Will be using in load more
- *          loadMore: '.load_more',                 // (OPTIONAL) Selector of the load more. For now it only support non input button
- *          search: {                               // (OPTIONAL) Selector of the search input MUST BE AN INPUT
- *              input: {
- *                  selector: 'input.search',
- *                  eventType: 'keypress'
- *              },
- *              btn: 'div.search_btn'
- *          },
- *          sort: {                                 // (OPTIONAL) Selector of the sort
- *              selector: 'ul.sort',                // if sort has been set this selector is required
- *              activeClass: 'active sorting'       // if not set the default active class would be the 'active sorting'
- *          },
- *          customFieldValue:                       // (OPTIONAL) Put the custom field in this code default setter is for class, text and value
- *              function (uiClonedTemplate, oInsertData, key) {
- *                  if(key === 'link_location') {
-                        uiClonedTemplate.attr('onclick', oInsertData['link_location']);
+ *          filter: {
+ *              ajax: {
+ *                  url: 'localhost/ajax/get_something',    // (OPTIONAL) URL of the data needed for the cloning and filtering
+ *                  customAjax: function(oSettings){        // (OPTIONAL) Will override the default ajax in this plugin
+ *                      myCustomAjax(oSettings)
+ *                  },
+ *                  csrfToken: {                            // (OPTIONAL) For security reason
+ *                      value: 'x5925626lsd62',
+ *                      name: 'my_token'
+ *                  },
+ *                  complete: function(oRetData) {          // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
  *                  }
+ *              },
+ *              limit: 10,                              // (OPTIONAL) Will be using in load more
+ *              loadMore: '.load_more',                 // (OPTIONAL) Selector of the load more. For now it only support non input button
+ *              search: {                               // (OPTIONAL) Selector of the search input MUST BE AN INPUT
+ *                  input: {
+ *                      selector: 'input.search',
+ *                      eventType: 'keypress'
+ *                  },
+ *                  btn: 'div.search_btn'
+ *              },
+ *              sort: {                                 // (OPTIONAL) Selector of the sort
+ *                  selector: 'ul.sort',                    // if sort has been set this selector is required
+ *                  activeClass: 'active sorting'           // if not set the default active class would be the 'active sorting'
  *              }
  *          }
  *      });
@@ -96,9 +101,13 @@
      *
      */
     var defaults = {
-        container: '#container',
-        template : '[data-template="my_template"]',
-        limit    : 10
+        clone : {
+            container: '#container',
+            template : '[data-template="my_template"]'
+        },
+        filter: {
+            limit: 10
+        }
     };
 
     /**
@@ -111,61 +120,61 @@
     var init = function (options) {
         config = $.extend(defaults, options);
 
-        if (!(validateConfig('config.container', 'string') && validateConfig('config.template', 'string'))) {
+        if (!(validateConfig('config.clone.container', 'string') && validateConfig('config.clone.template', 'string'))) {
             return ERROR_MSG.dataType;
         }
         // find for the container and the template
-        var uiContainer = uiMainContainer.find(config.container),
-            uiTemplate = uiMainContainer.find(config.template);
+        var uiContainer = uiMainContainer.find(config.clone.container),
+            uiTemplate = uiMainContainer.find(config.clone.template);
 
         // uiContainer && uiTemplate should be present so validate this
         if (!helper.isValid(uiContainer) && !helper.isValid(uiTemplate)) {
-            return config.container + ' and ' + config.template + ' ' + ERROR_MSG.ui; // stop if the two is not found
+            return config.clone.container + ' and ' + config.clone.template + ' ' + ERROR_MSG.ui; // stop if the two is not found
         }
 
-        // if config.data is found or set process cloning immediately
-        if (validateConfig('config.data', 'object')) {
-            _process.cloning(config.data);
+        // if config.clone.data is found or set process cloning immediately
+        if (validateConfig('config.clone.data', 'object')) {
+            _process.cloning(config.clone.data);
         }
 
         // if url is defined then one of the following should also be defined:
-        // config.sort, config.loadMore or config.search
-        else if (validateConfig('config.ajax.url', 'string')) {
+        // config.sort, config.filter.loadMore or config.filter.search
+        else if (validateConfig('config.filter.ajax.url', 'string')) {
             // check if config has 'loadMore'
-            if (validateConfig('config.loadMore', 'string')) {
-                _process.attachEvent(config.loadMore, 'click', function () {
+            if (validateConfig('config.filter.loadMore', 'string')) {
+                _process.attachEvent(config.filter.loadMore, 'click', function () {
                     _process.loadMore();
                 });
             }
 
             // check if config.sort has 'selector'
-            if (validateConfig('config.sort.selector', 'string')) {
-                _process.attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
+            if (validateConfig('config.filter.sort.selector', 'string')) {
+                _process.attachEvent(uiMainContainer.find(config.filter.sort.selector).children(), 'click', function (e) {
                     _process.sort(e);
                 });
             }
 
 
-            // check first if config.search is an object and has at least one element in it
-            if (validateConfig('config.search', 'object')) {
+            // check first if config.filter.search is an object and has at least one element in it
+            if (validateConfig('config.filter.search', 'object')) {
 
-                // check if config.search has 'input' property and has at least one element in it
-                if (validateConfig('config.search.input', 'object')) {
+                // check if config.filter.search has 'input' property and has at least one element in it
+                if (validateConfig('config.filter.search.input', 'object')) {
 
-                    // check if config.search.input has 'selector'
-                    if (validateConfig('config.search.input.selector', 'string')) {
-                        var sEventType = (validateConfig('config.search.input.eventType', 'string')) ?
-                                         config.search.input.eventType : 'keypress';
+                    // check if config.filter.search.input has 'selector'
+                    if (validateConfig('config.filter.search.input.selector', 'string')) {
+                        var sEventType = (validateConfig('config.filter.search.input.eventType', 'string')) ?
+                                         config.filter.search.input.eventType : 'keypress';
 
-                        _process.attachEvent(config.search.input.selector, sEventType, function (e) {
+                        _process.attachEvent(config.filter.search.input.selector, sEventType, function (e) {
                             if (sEventType === 'keypress' && e.keyCode === 13) {
                                 _process.search();
                             }
                         });
 
-                        // check if config.search has 'btn'
-                        if (validateConfig('config.search.btn', 'string')) {
-                            _process.attachEvent(config.search.btn, 'click', function () {
+                        // check if config.filter.search has 'btn'
+                        if (validateConfig('config.filter.search.btn', 'string')) {
+                            _process.attachEvent(config.filter.search.btn, 'click', function () {
                                 _process.search();
                             });
                         }
@@ -186,16 +195,16 @@
          *
          */
         search: function () {
-            var uiSearch = uiMainContainer.find(config.search.input.selector),
+            var uiSearch = uiMainContainer.find(config.filter.search.input.selector),
                 oOrder = _process.getOrdering(),
                 oData = {
-                    'keyword' : uiMainContainer.find(config.search.input.selector).val(),
+                    'keyword' : uiMainContainer.find(config.filter.search.input.selector).val(),
                     'order_by': oOrder.orderBy,
                     'order'   : oOrder.order
                 };
 
             // Process ajax
-            _process.ajax(config.ajax.url, oData, function () {
+            _process.ajax(config.filter.ajax.url, oData, function () {
                 uiSearch.attr('data-searched', uiSearch.val());
             }, function () {
                 // remove the children of the container
@@ -220,7 +229,7 @@
             // put previous searched value in the search input
             _process.setSearchValue();
 
-            _process.ajax(config.ajax.url, oData, function (oRetData) {
+            _process.ajax(config.filter.ajax.url, oData, function (oRetData) {
                 _process.loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
             });
         },
@@ -258,7 +267,7 @@
                 'order'   : oOrder.order
             };
 
-            _process.ajax(config.ajax.url, oData, function (oRetData) {
+            _process.ajax(config.filter.ajax.url, oData, function (oRetData) {
                 _process.loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
             }, function () {
                 // remove the children of the container
@@ -274,12 +283,17 @@
          * @param {Number} numUIRows
          */
         loadMoreShowHide: function (numTotalRows, numUIRows) {
-            if (validateConfig('config.loadMore', 'string')) {
-                var uiLoadMore = uiMainContainer.find(config.loadMore);
+            if (validateConfig('config.filter.loadMore', 'string')) {
+                var uiLoadMore = uiMainContainer.find(config.filter.loadMore);
 
                 uiLoadMore.text('Load More'); // TODO: This should be check if it is a button or other tag because what if load more is an input then text will not be suitable for it.
 
-                if (numTotalRows === numUIRows || numTotalRows <= config.limit || numUIRows > numTotalRows) {
+                // if config.filter.limit is not found then set the default to 10
+                if (!validateConfig('config.filter.limit', 'number')) {
+                    config.filter.limit = 10;
+                }
+
+                if (numTotalRows === numUIRows || numTotalRows <= config.filter.limit || numUIRows > numTotalRows) {
                     uiLoadMore.hide();
                 } else {
                     // show again the load more button if it is hidden
@@ -294,7 +308,7 @@
          *
          */
         removeChildrenOfContainer: function () {
-            uiMainContainer.find(config.container).children().not(config.template).remove();
+            uiMainContainer.find(config.clone.container).children().not(config.clone.template).remove();
         },
 
         /**
@@ -352,7 +366,7 @@
             for (var key in oData.data) {
                 if (oData.data.hasOwnProperty(key)) {
                     // clone the template
-                    uiClonedTemplate = uiMainContainer.find(config.template).clone();
+                    uiClonedTemplate = uiMainContainer.find(config.clone.template).clone();
 
                     // set field value, text or class
                     this.setFieldValue(uiClonedTemplate, oData.data[key]);
@@ -360,7 +374,7 @@
                     // remove the custom attribute of the cloned template and append it to the container
                     uiClonedTemplate
                         .removeAttr('data-template')// TODO: This should be parsed because this is dynamic
-                        .appendTo(uiMainContainer.find(config.container));
+                        .appendTo(uiMainContainer.find(config.clone.container));
                 }
             }
         },
@@ -378,10 +392,10 @@
 
             // check if csrf_token is set
             if (validateConfig('config.ajax.csrfToken', 'object')) {
-                if (validateConfig('config.ajax.csrfToken.name', 'string') &&
-                    validateConfig('config.ajax.csrfToken.value', 'string')
+                if (validateConfig('config.filter.ajax.csrfToken.name', 'string') &&
+                    validateConfig('config.filter.ajax.csrfToken.value', 'string')
                 ) {
-                    oData[config.ajax.csrfToken.name] = config.ajax.csrfToken.value;
+                    oData[config.filter.ajax.csrfToken.name] = config.filter.ajax.csrfToken.value;
                 }
             }
 
@@ -420,15 +434,15 @@
                         }
 
                         // if user wants to patch the complete then this function is suitable for it
-                        if(validateConfig('config.ajax.complete', 'function')) {
-                            config.ajax.complete(oRetData);
+                        if(validateConfig('config.filter.ajax.complete', 'function')) {
+                            config.filter.ajax.complete(oRetData);
                         }
                     }
                 }
             };
 
-            if (validateConfig('config.ajax.customAjax', 'function')) {
-                config.ajax.customAjax(oSettings);
+            if (validateConfig('config.filter.ajax.customAjax', 'function')) {
+                config.filter.ajax.customAjax(oSettings);
             } else {
                 $.ajax(oSettings);
             }
@@ -463,8 +477,8 @@
          */
         getPrevSearched: function () {
             var sReturnVal = '';
-            if (validateConfig('config.search.input.selector', 'string')) {
-                var uiInputSearch = uiMainContainer.find(config.search.input.selector),
+            if (validateConfig('config.filter.search.input.selector', 'string')) {
+                var uiInputSearch = uiMainContainer.find(config.filter.search.input.selector),
                     sSearchedKeyword = uiInputSearch.attr('data-searched');
 
                 if (sSearchedKeyword !== undefined) {
@@ -512,7 +526,7 @@
          * @todo Should put a selector in the children of the container for specificity and for more flexibity of the program
          */
         getOffset: function () {
-            return uiMainContainer.find(config.container).children().not(config.template).length;
+            return uiMainContainer.find(config.clone.container).children().not(config.clone.template).length;
         },
 
         /**
@@ -521,8 +535,8 @@
          * @private
          */
         setSearchValue: function () {
-            if (validateConfig('config.search.input', 'object')) {
-                var uiSearch = uiMainContainer.find(config.search.input),
+            if (validateConfig('config.filter.search.input', 'object')) {
+                var uiSearch = uiMainContainer.find(config.filter.search.input),
                     sDataSearch = uiSearch.attr('data-searched');
 
                 if (helper.isValid(sDataSearch)) {
@@ -536,7 +550,7 @@
     /**
      * Validates configuration settings options
      *
-     * @param {String} sConfig                     Configuration. Example config.search.input.selector
+     * @param {String} sConfig                     Configuration. Example config.filter.search.input.selector
      * @param {String} sDataType                   Data type of the config
      * @param {String} [sVarConfigName = 'config'] Configuration variable name example 'config'
      *
