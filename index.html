@@ -42,9 +42,15 @@
 <script>
     $(function () {
         $('#main_container').cloneFiltering({
-            url      : 'ajax/get_employee_list.php',
             container: '#container',
             template : '[data-template="employee-list"]',
+            ajax     : {
+                url      : 'ajax/get_employee_list.php',
+                csrfToken: {
+                    name : 'my_token',
+                    value: 'x5925626lsd62'
+                }
+            },
             search   : {
                 input: {
                     selector: 'input.search'
@@ -54,10 +60,6 @@
             loadMore : '#load_more_btn',
             sort     : {
                 selector: '#sorter'
-            },
-            csrfToken: {
-                name : 'my_token',
-                value: 'x5925626lsd62'
             }
         })
     });
