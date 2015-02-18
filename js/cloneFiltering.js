@@ -1,9 +1,12 @@
 /*jshint nonew:true, jquery:true, curly:true, noarg:true, forin:true, noempty:true, eqeqeq:true, strict:true, undef:true, bitwise:true, newcap:true, immed:true, onevar:true, browser:true, es3:true, devel:true, gcl:true */
 /**
+ * Makes cloning and filtering more easier.
+ * @author Eric Nilo
+ *
  * $('#main_container')                             // Container of the load more, search, and sort
  *      .cloneFiltering({
  *          container: '#container',                // (REQUIRED) Container of the template to be inserted
- *          template: '[data-template="template"]', // (REQUIRED) Template to be cloned
+ *          template: '[data-template="template"]', // (REQUIRED) Template to be cloned. Custom attribute must be data-template
  *          ajax: {
  *              url: 'localhost/ajax/get_something',// (OPTIONAL) URL of the data needed for the cloning and filtering
  *              customAjax: function(oSettings){    // (OPTIONAL) Will override the default ajax in this plugin
@@ -13,6 +16,8 @@
  *                  value: 'x5925626lsd62',
  *                  name: 'my_token'
  *              },
+ *              complete: function() {              // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
+ *              }
  *          },
  *          data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                  if url is set do not use this
@@ -42,6 +47,16 @@
  */
 (function ($) {
     "use strict";
+
+    /**
+     * Log the messages to the console
+     * NOTE: Use debug(message) instead of console.log()
+     *
+     * Accepted value: 'development' or 'production'
+     *
+     * @type {string}
+     */
+    var mode = 'development';
 
     /**
      * Error message container
@@ -161,7 +176,7 @@
     };
 
     /**
-     * Main process of this plugin
+     * Main processes of this plugin
      *
      * @private
      */
@@ -297,7 +312,6 @@
          *
          * @param {Object} uiClonedTemplate Cloned template that will be appended to the DOM container
          * @param {Object} oInsertData      Data that need to be passed to the cloned template
-         *
          */
         setFieldValue: function (uiClonedTemplate, oInsertData) {
             for (var key in oInsertData) {
@@ -327,7 +341,6 @@
          * @param {Object} oData  Note: This should have a valid format. Pls refer to ERROR_MSG.objectFormat
          *
          * @returns {String|Null} If this function returns string, cloning failed
-         * @private
          */
         cloning: function (oData) {
             if (!this.isValidFormat(oData)) {
@@ -359,8 +372,6 @@
          * @param {Object}  oData                  Data to be sent to server
          * @param           [fnAdditionalCallback] Function that will be called after cloning
          * @param           [fnBeforeCloning]      Function that will be called before cloning
-         *
-         * @private
          */
         ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
             var oSettings;
@@ -380,7 +391,14 @@
                 data   : oData,
                 success: function (sRetData) {
                     if (typeof sRetData === 'string' && sRetData.length) {
-                        var oRetData = $.parseJSON(sRetData);
+                        var oRetData;
+
+                        try {
+                            oRetData = $.parseJSON(sRetData);
+                        } catch (err) {
+                            debug(err, 'alert');
+                            return false;
+                        }
 
                         if (!_process.isValidFormat(oRetData)) {
                             return ERROR_MSG.objectFormat; // stop if format of the object is invalid
@@ -400,6 +418,11 @@
                         else {
                             _process.removeChildrenOfContainer();
                         }
+
+                        // if user wants to patch the complete then this function is suitable for it
+                        if(validateConfig('config.ajax.complete', 'function')) {
+                            config.ajax.complete(oRetData);
+                        }
                     }
                 }
             };
@@ -417,8 +440,6 @@
          * @param {String} sSelector
          * @param {String} sEventType
          * @param fnCallback
-         *
-         * @private
          */
         attachEvent: function (sSelector, sEventType, fnCallback) {
             uiMainContainer.find(sSelector).on(sEventType, function (e) {
@@ -561,6 +582,27 @@
             return (sDataType === 'object') ? // if sDataType is 'object' then we should check it if it has more than 1 property or element on it
                    (helper.lengthOf(oConfig[sLastElementVal]) > 0) :
                    typeof oConfig[sLastElementVal] === sDataType;   // else
+        }
+    };
+
+    /**
+     * Log the messages to the console
+     *
+     * @param {String} sMessage
+     * @param {String} [sLogType = 'console']
+     */
+    var debug = function (sMessage, sLogType) {
+        if (mode === 'production') {
+            sLogType = (sLogType !== undefined) ? sLogType : 'console';
+
+            switch (sLogType) {
+                case 'console':
+                    console.log(sMessage);
+                    break;
+                case 'alert':
+                    alert(sMessage);
+                    break;
+            }
         }
     };
 
