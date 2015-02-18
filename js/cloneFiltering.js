@@ -71,6 +71,7 @@
         ui          : 'DOM not found or do not exists!',
         objectFormat: 'Format of the object is invalid. Format should be:' +
                     '{ ' +
+                        'status: true' +
                         'data:' +
                             '{ 0:' +
                                 '{ any: "value" }' +
@@ -79,6 +80,7 @@
                             '},' +
                              '...' +
                         'total_rows: 10' +
+                        'message: "my message here"' +
                     '}',
         dataType    : 'Data type invalid'
     };
@@ -318,7 +320,12 @@
          * @returns {boolean} If true oData has a valid format
          */
         isValidFormat: function (oData) {
-            return (oData.hasOwnProperty('data') && oData.hasOwnProperty('total_rows'));
+            return (
+                oData.hasOwnProperty('data') ||
+                oData.hasOwnProperty('total_rows') ||
+                oData.hasOwnProperty('message') ||
+                oData.hasOwnProperty('status')
+            );
         },
 
         /**
