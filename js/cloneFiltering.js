@@ -285,8 +285,9 @@
          * @param {Number} numUIRows
          */
         loadMoreShowHide: function (numTotalRows, numUIRows) {
+            var uiLoadMore = uiMainContainer.find(config.filter.loadMore);
+
             if (validateConfig('config.filter.loadMore', 'string')) {
-                var uiLoadMore = uiMainContainer.find(config.filter.loadMore);
 
                 uiLoadMore.text('Load More'); // TODO: This should be check if it is a button or other tag because what if load more is an input then text will not be suitable for it.
 
@@ -301,6 +302,8 @@
                     // show again the load more button if it is hidden
                     uiLoadMore.show();
                 }
+            } else {
+                uiLoadMore.hide();
             }
         },
 
@@ -435,6 +438,7 @@
                             }
                         }
                         else {
+                            _process.loadMoreShowHide(0, 0);
                             _process.removeChildrenOfContainer();
                         }
 
