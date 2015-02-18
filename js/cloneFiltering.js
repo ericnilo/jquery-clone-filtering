@@ -575,18 +575,16 @@
         // if arrConfig has more than 2 elements then loop through it until sLastElementVal matches
         // then return true if it matches the supplied data type
         if (arrConfig.length > 1) {
-            for (key in arrConfig) {
-                if (arrConfig.hasOwnProperty(key)) {
-                    if (arrConfig[key] === sLastElementVal) {
-                        return (sDataType === 'object') ?
-                               (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
-                               typeof oConfig[sLastElementVal] === sDataType;   // else
+            for(var i = 0; i < arrConfig.length; i++) {
+                if (arrConfig[i] === sLastElementVal) {
+                    return (sDataType === 'object') ?
+                           (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
+                           typeof oConfig[sLastElementVal] === sDataType;   // else
+                } else {
+                    if (helper.hasValidKey(oConfig, arrConfig[i])) {
+                        oConfig = oConfig[arrConfig[i]];
                     } else {
-                        if (helper.hasValidKey(oConfig, arrConfig[key])) {
-                            oConfig = oConfig[arrConfig[key]];
-                        } else {
-                            return false;
-                        }
+                        return false;
                     }
                 }
             }
