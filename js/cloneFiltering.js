@@ -1,4 +1,4 @@
-/*jshint nonew:true, jquery:true, curly:true, noarg:true, forin:true, noempty:true, eqeqeq:true, strict:true, undef:true, bitwise:true, newcap:true, immed:true, onevar:true, browser:true, es3:true, gcl:true */
+/*jshint nonew:true, jquery:true, curly:true, noarg:true, forin:true, noempty:true, eqeqeq:true, strict:true, undef:true, bitwise:true, newcap:true, immed:true, onevar:true, browser:true, es3:true, devel:true, gcl:true */
 /**
  * $('#main_container')                             // Container of the load more, search, and sort
  *      .cloneFiltering({
@@ -109,66 +109,70 @@
         }
 
         // if config.data is found or set process cloning immediately
-        if (helper.lengthOf(config.data)) {
-            process._cloning(config.data);
+        if (validateConfig('config.data', 'object')) {
+            _process.cloning(config.data);
         }
 
         // if url is defined then one of the following should also be defined:
         // config.sort, config.loadMore or config.search
-        else if (helper.hasValidKey(config, 'url')) {
-
+        else if (validateConfig('config.ajax.url', 'string')) {
             // check if config has 'loadMore'
-            if (helper.hasValidKey(config, 'loadMore')) {
-                process._attachEvent(config.loadMore, 'click', function () {
-                    process.loadMore();
+            if (validateConfig('config.loadMore', 'string')) {
+                _process.attachEvent(config.loadMore, 'click', function () {
+                    _process.loadMore();
                 });
             }
 
             // check if config.sort has 'selector'
-            if (helper.hasValidKey(config, 'sort') && helper.hasValidKey(config.sort, 'selector')) {
-                process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
-                    process.sort(e);
+            if (validateConfig('config.sort.selector', 'string')) {
+                _process.attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
+                    _process.sort(e);
                 });
             }
 
 
             // check first if config.search is an object and has at least one element in it
-            if (helper.lengthOf(config.search)) {
+            if (validateConfig('config.search', 'object')) {
 
-                // check if config.search has 'input' property
-                if (helper.hasValidKey(config.search, 'input')) {
+                // check if config.search has 'input' property and has at least one element in it
+                if (validateConfig('config.search.input', 'object')) {
 
                     // check if config.search.input has 'selector'
-                    if (helper.hasValidKey(config.search.input, 'selector')) {
-                        var sEventType = (helper.hasValidKey(config.search.input, 'eventType')) ?
+                    if (validateConfig('config.search.input.selector', 'string')) {
+                        var sEventType = (validateConfig('config.search.input.eventType', 'string')) ?
                                          config.search.input.eventType : 'keypress';
 
-                        process._attachEvent(config.search.input.selector, sEventType, function (e) {
+                        _process.attachEvent(config.search.input.selector, sEventType, function (e) {
                             if (sEventType === 'keypress' && e.keyCode === 13) {
-                                process.search();
+                                _process.search();
                             }
                         });
-                    }
 
-                    // check if config.search has 'btn'
-                    if (helper.hasValidKey(config.search, 'btn')) {
-                        process._attachEvent(config.search.btn, 'click', function () {
-                            process.search();
-                        });
+                        // check if config.search has 'btn'
+                        if (validateConfig('config.search.btn', 'string')) {
+                            _process.attachEvent(config.search.btn, 'click', function () {
+                                _process.search();
+                            });
+                        }
                     }
                 }
             }
         }
     };
 
-    var process = {
+    /**
+     * Main process of this plugin
+     *
+     * @private
+     */
+    var _process = {
         /**
          * For search functionality
          *
          */
         search: function () {
             var uiSearch = uiMainContainer.find(config.search.input.selector),
-                oOrder = process._getOrdering(),
+                oOrder = _process.getOrdering(),
                 oData = {
                     'keyword' : uiMainContainer.find(config.search.input.selector).val(),
                     'order_by': oOrder.orderBy,
@@ -176,12 +180,12 @@
                 };
 
             // Process ajax
-            process._ajax(config.url, oData, function () {
+            _process.ajax(config.ajax.url, oData, function () {
                 uiSearch.attr('data-searched', uiSearch.val());
             }, function () {
                 // remove the children of the container
                 // also make sure the template is not remove
-                process._removeChildrenOfContainer();
+                _process.removeChildrenOfContainer();
             });
         },
 
@@ -190,26 +194,26 @@
          *
          */
         loadMore: function () {
-            var oOrder = process._getOrdering(),
+            var oOrder = _process.getOrdering(),
                 oData = {
-                    'keyword' : process._getPrevSearched(),
-                    'offset'  : process._getOffset(),
+                    'keyword' : _process.getPrevSearched(),
+                    'offset'  : _process.getOffset(),
                     'order_by': oOrder.orderBy,
                     'order'   : oOrder.order
                 };
 
             // put previous searched value in the search input
-            process._setSearchValue();
+            _process.setSearchValue();
 
-            process._ajax(config.url, oData, function (oRetData) {
-                process._loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
+            _process.ajax(config.ajax.url, oData, function (oRetData) {
+                _process.loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
             });
         },
 
         sort: function (e) {
             var uiTarget = uiMainContainer.find(e.target), oData, oOrder;
 
-            sActiveClass = (config.sort.activeClass !== undefined) ?
+            sActiveClass = (validateConfig('config.sort.activeClass', 'string')) ?
                            config.sort.activeClass : 'active sorting';
 
             if (uiTarget.hasClass(sActiveClass)) {
@@ -227,24 +231,24 @@
             }
 
             // put previous searched value in the search input
-            process._setSearchValue();
+            _process.setSearchValue();
 
             // get order
-            oOrder = process._getOrdering();
+            oOrder = _process.getOrdering();
 
             // assign value in oData
             oData = {
-                'keyword' : process._getPrevSearched(),
+                'keyword' : _process.getPrevSearched(),
                 'order_by': oOrder.orderBy,
                 'order'   : oOrder.order
             };
 
-            process._ajax(config.url, oData, function (oRetData) {
-                process._loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
+            _process.ajax(config.ajax.url, oData, function (oRetData) {
+                _process.loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
             }, function () {
                 // remove the children of the container
                 // also make sure the template is not remove
-                process._removeChildrenOfContainer();
+                _process.removeChildrenOfContainer();
             });
         },
 
@@ -253,19 +257,19 @@
          *
          * @param {Number} numTotalRows
          * @param {Number} numUIRows
-         *
-         * @private
          */
-        _loadMoreShowHide: function (numTotalRows, numUIRows) {
-            var uiLoadMore = uiMainContainer.find(config.loadMore);
+        loadMoreShowHide: function (numTotalRows, numUIRows) {
+            if (validateConfig('config.loadMore', 'string')) {
+                var uiLoadMore = uiMainContainer.find(config.loadMore);
 
-            uiLoadMore.text('Load More'); // TODO: This should be check if it is a button or other tag because what if load more is an input then text will not be suitable for it.
+                uiLoadMore.text('Load More'); // TODO: This should be check if it is a button or other tag because what if load more is an input then text will not be suitable for it.
 
-            if (numTotalRows === numUIRows || numTotalRows <= config.limit || numUIRows > numTotalRows) {
-                uiLoadMore.hide();
-            } else {
-                // show again the load more button if it is hidden
-                uiLoadMore.show();
+                if (numTotalRows === numUIRows || numTotalRows <= config.limit || numUIRows > numTotalRows) {
+                    uiLoadMore.hide();
+                } else {
+                    // show again the load more button if it is hidden
+                    uiLoadMore.show();
+                }
             }
         },
 
@@ -273,9 +277,8 @@
          * Remove the children of the container and also
          *  make sure the template is not remove if in case template is inside the container
          *
-         * @private
          */
-        _removeChildrenOfContainer: function () {
+        removeChildrenOfContainer: function () {
             uiMainContainer.find(config.container).children().not(config.template).remove();
         },
 
@@ -284,9 +287,8 @@
          *
          * @param {Object} oData
          * @returns {boolean} If true oData has a valid format
-         * @private
          */
-        _isValidFormat: function (oData) {
+        isValidFormat: function (oData) {
             return (oData.hasOwnProperty('data') && oData.hasOwnProperty('total_rows'));
         },
 
@@ -327,8 +329,8 @@
          * @returns {String|Null} If this function returns string, cloning failed
          * @private
          */
-        _cloning: function (oData) {
-            if (!this._isValidFormat(oData)) {
+        cloning: function (oData) {
+            if (!this.isValidFormat(oData)) {
                 return ERROR_MSG.objectFormat; // stop if format of the object is invalid
             }
 
@@ -360,12 +362,16 @@
          *
          * @private
          */
-        _ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
+        ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
             var oSettings;
 
             // check if csrf_token is set
-            if(helper.lengthOf(config.csrfToken)) {
-                oData[config.csrfToken.name] = config.csrfToken.value;
+            if (validateConfig('config.ajax.csrfToken', 'object')) {
+                if (validateConfig('config.ajax.csrfToken.name', 'string') &&
+                    validateConfig('config.ajax.csrfToken.value', 'string')
+                ) {
+                    oData[config.ajax.csrfToken.name] = config.ajax.csrfToken.value;
+                }
             }
 
             oSettings = {
@@ -376,7 +382,7 @@
                     if (typeof sRetData === 'string' && sRetData.length) {
                         var oRetData = $.parseJSON(sRetData);
 
-                        if (!process._isValidFormat(oRetData)) {
+                        if (!_process.isValidFormat(oRetData)) {
                             return ERROR_MSG.objectFormat; // stop if format of the object is invalid
                         }
 
@@ -385,21 +391,21 @@
                                 fnBeforeCloning(oRetData);
                             }
 
-                            process._cloning(oRetData);
+                            _process.cloning(oRetData);
 
                             if (typeof fnAdditionalCallback === 'function') {
                                 fnAdditionalCallback(oRetData);
                             }
                         }
                         else {
-                            process._removeChildrenOfContainer();
+                            _process.removeChildrenOfContainer();
                         }
                     }
                 }
             };
 
-            if(config.hasOwnProperty('customAjax') && typeof config.customAjax === "function") {
-                config.customAjax(oSettings);
+            if (validateConfig('config.ajax.customAjax', 'function')) {
+                config.ajax.customAjax(oSettings);
             } else {
                 $.ajax(oSettings);
             }
@@ -414,10 +420,10 @@
          *
          * @private
          */
-        _attachEvent: function (sSelector, sEventType, fnCallback) {
+        attachEvent: function (sSelector, sEventType, fnCallback) {
             uiMainContainer.find(sSelector).on(sEventType, function (e) {
                 e.stopPropagation();
-                if(sEventType === 'click') {
+                if (sEventType === 'click') {
                     e.preventDefault();
                 }
                 if (typeof fnCallback === 'function') {
@@ -434,12 +440,9 @@
          *
          * @private
          */
-        _getPrevSearched: function () {
+        getPrevSearched: function () {
             var sReturnVal = '';
-            if(helper.hasValidKey(config, 'search') &&
-               helper.hasValidKey(config.search, 'input') &&
-               helper.hasValidKey(config.search.input, 'selector')
-            ){
+            if (validateConfig('config.search.input.selector', 'string')) {
                 var uiInputSearch = uiMainContainer.find(config.search.input.selector),
                     sSearchedKeyword = uiInputSearch.attr('data-searched');
 
@@ -463,7 +466,7 @@
          *
          * @private
          */
-        _getOrdering: function () {
+        getOrdering: function () {
             // cache DOM sort for better performance
             var sProcessedClass = helper.classBuilder(sActiveClass),
                 uiSort = uiMainContainer.find(sProcessedClass);
@@ -487,7 +490,7 @@
          * @private
          * @todo Should put a selector in the children of the container for specificity and for more flexibity of the program
          */
-        _getOffset: function () {
+        getOffset: function () {
             return uiMainContainer.find(config.container).children().not(config.template).length;
         },
 
@@ -496,8 +499,8 @@
          *
          * @private
          */
-        _setSearchValue: function () {
-            if(helper.hasValidKey(config, 'search') && helper.hasValidKey(config.search, 'input')) {
+        setSearchValue: function () {
+            if (validateConfig('config.search.input', 'object')) {
                 var uiSearch = uiMainContainer.find(config.search.input),
                     sDataSearch = uiSearch.attr('data-searched');
 
@@ -512,17 +515,20 @@
     /**
      * Validates configuration settings options
      *
-     * @param {String} sConfig  Configuration. Example config.search.input.selector
-     * @param {String} sDataType    Data type of the config
+     * @param {String} sConfig                     Configuration. Example config.search.input.selector
+     * @param {String} sDataType                   Data type of the config
+     * @param {String} [sVarConfigName = 'config'] Configuration variable name example 'config'
      *
      * @return {Boolean} True if config matches the valid data type
      */
-    var validateConfig = function (sConfig, sDataType) {
+    var validateConfig = function (sConfig, sDataType, sVarConfigName) {
         var arrConfig = sConfig.split('.'), key, sLastElementVal,
             oConfig = config;
 
+        sVarConfigName = (sVarConfigName !== undefined) ? sVarConfigName : 'config';
+
         // if you want to use this in other project then add the comparing value to the parameter above
-        if (arrConfig[0] === 'config') {
+        if (arrConfig[0] === sVarConfigName) {
             arrConfig.shift(); // removes the first element if 'config' is found
         } else {
             return false; // stop here if the starting string is not 'config'
@@ -537,7 +543,9 @@
             for (key in arrConfig) {
                 if (arrConfig.hasOwnProperty(key)) {
                     if (arrConfig[key] === sLastElementVal) {
-                        return typeof oConfig[arrConfig[key]] === sDataType;
+                        return (sDataType === 'object') ?
+                               (helper.lengthOf(config[sLastElementVal]) > 0) : // if
+                               typeof config[sLastElementVal] === sDataType;   // else
                     } else {
                         if (helper.hasValidKey(oConfig, arrConfig[key])) {
                             oConfig = oConfig[arrConfig[key]];
@@ -550,7 +558,9 @@
         }
         // if arrConfig has just one element then check immediately the data type of it
         else {
-            return typeof config[sLastElementVal] === sDataType;
+            return (sDataType === 'object') ? // if sDataType is 'object' then we should check it if it has more than 1 property or element on it
+                   (helper.lengthOf(config[sLastElementVal]) > 0) :
+                   typeof config[sLastElementVal] === sDataType;   // else
         }
     };
 
@@ -563,7 +573,7 @@
          * @returns {number} Length of an oObject
          */
         lengthOf: function (oObject) {
-            if (! helper._isValidObject(oObject)) {
+            if (!helper._isValidObject(oObject)) {
                 return 0; // stop here if oObject is not defined or not an object
             }
 
@@ -589,7 +599,7 @@
             var sReturnClass = '',
                 arrClasses = [];
 
-            if(sClasses !== undefined && sClasses.trim().length > 0) {
+            if (sClasses !== undefined && sClasses.trim().length > 0) {
                 arrClasses = sClasses.trim().split(' ');
                 sReturnClass = '.' + arrClasses.join('.');
             }
@@ -629,7 +639,7 @@
          *
          * @private
          */
-        _isValidObject: function(oObject) {
+        _isValidObject: function (oObject) {
             return (oObject !== undefined && typeof oObject === 'object');
         }
     };
