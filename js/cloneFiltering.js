@@ -59,7 +59,8 @@
                             '},' +
                              '...' +
                         'total_rows: 10' +
-                    '}'
+                    '}',
+        dataType    : 'Data type invalid'
     };
 
     /**
@@ -95,6 +96,9 @@
     var init = function (options) {
         config = $.extend(defaults, options);
 
+        if (!(validateConfig('config.container', 'string') && validateConfig('config.template', 'string'))) {
+            return ERROR_MSG.dataType;
+        }
         // find for the container and the template
         var uiContainer = uiMainContainer.find(config.container),
             uiTemplate = uiMainContainer.find(config.template);
@@ -111,17 +115,17 @@
 
         // if url is defined then one of the following should also be defined:
         // config.sort, config.loadMore or config.search
-        else if (helper.isValidKey(config, 'url')) {
+        else if (helper.hasValidKey(config, 'url')) {
 
             // check if config has 'loadMore'
-            if (helper.isValidKey(config, 'loadMore')) {
+            if (helper.hasValidKey(config, 'loadMore')) {
                 process._attachEvent(config.loadMore, 'click', function () {
                     process.loadMore();
                 });
             }
 
             // check if config.sort has 'selector'
-            if (helper.isValidKey(config, 'sort') && helper.isValidKey(config.sort, 'selector')) {
+            if (helper.hasValidKey(config, 'sort') && helper.hasValidKey(config.sort, 'selector')) {
                 process._attachEvent(uiMainContainer.find(config.sort.selector).children(), 'click', function (e) {
                     process.sort(e);
                 });
@@ -132,11 +136,11 @@
             if (helper.lengthOf(config.search)) {
 
                 // check if config.search has 'input' property
-                if (helper.isValidKey(config.search, 'input')) {
+                if (helper.hasValidKey(config.search, 'input')) {
 
                     // check if config.search.input has 'selector'
-                    if (helper.isValidKey(config.search.input, 'selector')) {
-                        var sEventType = (helper.isValidKey(config.search.input, 'eventType')) ?
+                    if (helper.hasValidKey(config.search.input, 'selector')) {
+                        var sEventType = (helper.hasValidKey(config.search.input, 'eventType')) ?
                                          config.search.input.eventType : 'keypress';
 
                         process._attachEvent(config.search.input.selector, sEventType, function (e) {
@@ -147,7 +151,7 @@
                     }
 
                     // check if config.search has 'btn'
-                    if (helper.isValidKey(config.search, 'btn')) {
+                    if (helper.hasValidKey(config.search, 'btn')) {
                         process._attachEvent(config.search.btn, 'click', function () {
                             process.search();
                         });
@@ -306,7 +310,7 @@
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
 
                     // set the custom field value of cloned template for extendability
-                    if (helper.isValidKey(config, 'customFieldValue') &&
+                    if (helper.hasValidKey(config, 'customFieldValue') &&
                         typeof config.customFieldValue === "function"
                     ) {
                         config.customFieldValue(uiClonedTemplate, oInsertData, key);
@@ -432,9 +436,9 @@
          */
         _getPrevSearched: function () {
             var sReturnVal = '';
-            if(helper.isValidKey(config, 'search') &&
-               helper.isValidKey(config.search, 'input') &&
-               helper.isValidKey(config.search.input, 'selector')
+            if(helper.hasValidKey(config, 'search') &&
+               helper.hasValidKey(config.search, 'input') &&
+               helper.hasValidKey(config.search.input, 'selector')
             ){
                 var uiInputSearch = uiMainContainer.find(config.search.input.selector),
                     sSearchedKeyword = uiInputSearch.attr('data-searched');
@@ -493,7 +497,7 @@
          * @private
          */
         _setSearchValue: function () {
-            if(helper.isValidKey(config, 'search') && helper.isValidKey(config.search, 'input')) {
+            if(helper.hasValidKey(config, 'search') && helper.hasValidKey(config.search, 'input')) {
                 var uiSearch = uiMainContainer.find(config.search.input),
                     sDataSearch = uiSearch.attr('data-searched');
 
@@ -508,66 +512,47 @@
     /**
      * Validates configuration settings options
      *
+     * @param {String} sConfig  Configuration. Example config.search.input.selector
+     * @param {String} sDataType    Data type of the config
+     *
+     * @return {Boolean} True if config matches the valid data type
      */
-    var validate = {
-        container: function () {
-            return helper.isValidKey(config, 'container');
-        },
-        template : function () {
-            return helper.isValidKey(config, 'template');
-        },
-        ajax     : {
-            url       : function () {
-                return helper.isValidKey(config.ajax, 'url');
-            },
-            customAjax: function () {
-                return helper.isValidKey(config.ajax, 'customAjax') && typeof config.ajax.customAjax === "function";
-            },
-            csrfToken : {
-                value: function () {
-                    return this._csrfToken() && helper.isValidKey(config.ajax.csrfToken, 'value');
-                },
-                name : function () {
-                    return this._csrfToken() && helper.isValidKey(config.ajax.csrfToken, 'name');
+    var validateConfig = function (sConfig, sDataType) {
+        var arrConfig = sConfig.split('.'), key, sLastElementVal,
+            oConfig = config;
+
+        // if you want to use this in other project then add the comparing value to the parameter above
+        if (arrConfig[0] === 'config') {
+            arrConfig.shift(); // removes the first element if 'config' is found
+        } else {
+            return false; // stop here if the starting string is not 'config'
+        }
+
+        // get the last element of arrConfig
+        sLastElementVal = arrConfig[arrConfig.length - 1];
+
+        // if arrConfig has more than 2 elements then loop through it until sLastElementVal matches
+        // then return true if it matches the supplied data type
+        if (arrConfig.length > 1) {
+            for (key in arrConfig) {
+                if (arrConfig.hasOwnProperty(key)) {
+                    if (arrConfig[key] === sLastElementVal) {
+                        return typeof oConfig[arrConfig[key]] === sDataType;
+                    } else {
+                        if (helper.hasValidKey(oConfig, arrConfig[key])) {
+                            oConfig = oConfig[arrConfig[key]];
+                        } else {
+                            return false;
+                        }
+                    }
                 }
-            },
-            _csrfToken: function () {
-                return validate._ajax() && helper.isValidKey(config.ajax, 'csrfToken');
             }
-        },
-        _ajax    : function () {
-            return helper.isValidKey(config, 'ajax');
-        },
-        data     : function () {
-            return helper.isValidKey(config, 'data');
-        },
-        limit    : function () {
-            return helper.isValidKey(config, 'limit');
-        },
-        loadMore : function () {
-            return helper.isValidKey(config, 'loadMore');
-        },
-        search   : {
-            input : {
-                selector : function () {
-                    return this._input() && helper.isValidKey(config.input, 'selector');
-                },
-                eventType: function () {
-                    return this._input() && helper.isValidKey(config.input, 'eventType');
-                }
-            },
-            btn   : function () {
-                return this._input() && helper.isValidKey(config.search, 'btn');
-            },
-            _input: function () {
-                return validate._search() && helper.isValidKey(config.search, 'input');
-            }
-        },
-        _search  : function () {
-            return helper.isValidKey(config, 'search');
+        }
+        // if arrConfig has just one element then check immediately the data type of it
+        else {
+            return typeof config[sLastElementVal] === sDataType;
         }
     };
-
 
     var helper = {
         /**
@@ -631,7 +616,7 @@
          *
          * @returns {boolean}
          */
-        isValidKey: function (oObject, sKey) {
+        hasValidKey: function (oObject, sKey) {
             return helper._isValidObject(oObject) && oObject.hasOwnProperty(sKey);
         },
 
