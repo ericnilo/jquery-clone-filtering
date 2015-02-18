@@ -544,8 +544,8 @@
                 if (arrConfig.hasOwnProperty(key)) {
                     if (arrConfig[key] === sLastElementVal) {
                         return (sDataType === 'object') ?
-                               (helper.lengthOf(config[sLastElementVal]) > 0) : // if
-                               typeof config[sLastElementVal] === sDataType;   // else
+                               (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
+                               typeof oConfig[sLastElementVal] === sDataType;   // else
                     } else {
                         if (helper.hasValidKey(oConfig, arrConfig[key])) {
                             oConfig = oConfig[arrConfig[key]];
@@ -559,8 +559,8 @@
         // if arrConfig has just one element then check immediately the data type of it
         else {
             return (sDataType === 'object') ? // if sDataType is 'object' then we should check it if it has more than 1 property or element on it
-                   (helper.lengthOf(config[sLastElementVal]) > 0) :
-                   typeof config[sLastElementVal] === sDataType;   // else
+                   (helper.lengthOf(oConfig[sLastElementVal]) > 0) :
+                   typeof oConfig[sLastElementVal] === sDataType;   // else
         }
     };
 
