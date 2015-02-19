@@ -206,8 +206,9 @@
                 };
 
             // Process ajax
-            _process.ajax(config.filter.ajax.url, oData, function () {
+            _process.ajax(config.filter.ajax.url, oData, function (oRetData) {
                 uiSearch.attr('data-searched', uiSearch.val());
+                _process.loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
             }, function () {
                 // remove the children of the container
                 // also make sure the template is not remove
@@ -313,7 +314,11 @@
          *
          */
         removeChildrenOfContainer: function () {
-            uiMainContainer.find(config.clone.container).children().not(config.clone.template).remove();
+            if (validateConfig('config.clone.container', 'string') &&
+                validateConfig('config.clone.template', 'string')
+            ) {
+                uiMainContainer.find(config.clone.container).children().not(config.clone.template).remove();
+            }
         },
 
         /**
