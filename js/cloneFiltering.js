@@ -2,6 +2,7 @@
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
+ * @version 0.13.1
  *
  * $('#main_container')                             // Container of the load more, search, and sort OR the main container of the container and template
  *      .cloneFiltering({
@@ -410,6 +411,9 @@
                     }
                 }
             }
+
+            // if config.filter.limit is not found then set the default to 10 and put it to the sending data
+            oData.limit = (!validateConfig('config.filter.limit', 'number')) ? config.filter.limit : 10;
 
             oSettings = {
                 url    : sUrl,
