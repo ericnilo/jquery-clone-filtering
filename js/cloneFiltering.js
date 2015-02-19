@@ -1,16 +1,16 @@
 /*jshint nonew:true, jquery:true, curly:true, noarg:true, forin:true, noempty:true, eqeqeq:true, strict:true, undef:true, bitwise:true, newcap:true, immed:true, onevar:true, browser:true, es3:true, devel:true, gcl:true */
 /**
- * Makes cloning and filtering more easier.
+ * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
+ * @version 0.13.1
  *
- * $('#main_container')                             // Container of the load more, search, and sort
+ * $('#main_container')                             // Container of the load more, search, and sort OR the main container of the container and template
  *      .cloneFiltering({
  *          clone: {
  *              container: '#container',                // (REQUIRED) Container of the template to be inserted
  *              template: '[data-template="template"]', // (REQUIRED) Template to be cloned. Custom attribute must be data-template
  *              data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                      if url is set do not use this
- *                                                                      ,
  *              customFieldValue:                       // (OPTIONAL) Put the custom field in this code default setter is for class, text and value
  *                  function (uiClonedTemplate, oInsertData, key) {
  *                      if(key === 'link_location') {
@@ -411,6 +411,9 @@
                     }
                 }
             }
+
+            // if config.filter.limit is not found then set the default to 10 and put it to the sending data
+            oData.limit = (validateConfig('config.filter.limit', 'number')) ? config.filter.limit : 10;
 
             oSettings = {
                 url    : sUrl,
