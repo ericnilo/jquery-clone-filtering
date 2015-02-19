@@ -420,7 +420,7 @@
                 data   : oData,
                 success: function (sRetData) {
                     if (typeof sRetData === 'string' && sRetData.length) {
-                        var oRetData;
+                        var oRetData, bDataHasVAlidFormat;
 
                         try {
                             oRetData = $.parseJSON(sRetData);
@@ -429,7 +429,9 @@
                             return false;
                         }
 
-                        if (!_process.isValidFormat(oRetData)) {
+                        bDataHasVAlidFormat = _process.isValidFormat(oRetData);
+
+                        if (!bDataHasVAlidFormat) {
                             return ERROR_MSG.objectFormat; // stop if format of the object is invalid
                         }
 
@@ -450,7 +452,7 @@
                         }
 
                         // if user wants to patch the complete then this function is suitable for it
-                        if(validateConfig('config.filter.ajax.complete', 'function')) {
+                        if(validateConfig('config.filter.ajax.complete', 'function') && bDataHasVAlidFormat) {
                             config.filter.ajax.complete(oRetData);
                         }
                     }
