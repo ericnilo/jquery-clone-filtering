@@ -206,8 +206,9 @@
                 };
 
             // Process ajax
-            _process.ajax(config.filter.ajax.url, oData, function () {
+            _process.ajax(config.filter.ajax.url, oData, function (oRetData) {
                 uiSearch.attr('data-searched', uiSearch.val());
+                _process.loadMoreShowHide(oRetData.total_rows, helper.lengthOf(oRetData.data) + oData.offset);
             }, function () {
                 // remove the children of the container
                 // also make sure the template is not remove
@@ -285,8 +286,9 @@
          * @param {Number} numUIRows
          */
         loadMoreShowHide: function (numTotalRows, numUIRows) {
+            var uiLoadMore = uiMainContainer.find(config.filter.loadMore);
+
             if (validateConfig('config.filter.loadMore', 'string')) {
-                var uiLoadMore = uiMainContainer.find(config.filter.loadMore);
 
                 uiLoadMore.text('Load More'); // TODO: This should be check if it is a button or other tag because what if load more is an input then text will not be suitable for it.
 
@@ -301,6 +303,8 @@
                     // show again the load more button if it is hidden
                     uiLoadMore.show();
                 }
+            } else {
+                uiLoadMore.hide();
             }
         },
 
@@ -310,7 +314,11 @@
          *
          */
         removeChildrenOfContainer: function () {
-            uiMainContainer.find(config.clone.container).children().not(config.clone.template).remove();
+            if (validateConfig('config.clone.container', 'string') &&
+                validateConfig('config.clone.template', 'string')
+            ) {
+                uiMainContainer.find(config.clone.container).children().not(config.clone.template).remove();
+            }
         },
 
         /**
@@ -435,6 +443,7 @@
                             }
                         }
                         else {
+                            _process.loadMoreShowHide(0, 0);
                             _process.removeChildrenOfContainer();
                         }
 
