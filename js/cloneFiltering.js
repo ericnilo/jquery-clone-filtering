@@ -28,8 +28,12 @@
  *                      'my_token_name' : 'myTokenValue',
  *                      'my_additioanal_data_name' : 'myAdditionalValue'
  *                  },
- *                  complete: function(oRetData) {          // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
- *                  }
+ *                  beforeSend: function(){                 // (OPTIONAL)
+ *                  },
+ *                  success: function(oRetData) {           // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
+ *                  },
+ *                  complete: function() {                  // (OPTIONAL)
+ *                  },
  *              },
  *              limit: 10,                              // (OPTIONAL) Will be using in load more
  *              loadMore: '.load_more',                 // (OPTIONAL) Selector of the load more. For now it only support non input button
@@ -70,17 +74,17 @@
         ui          : 'DOM not found or do not exists!',
         objectFormat: 'Format of the cloning data object is invalid. Format should be:' +
                     '{ ' +
-                        'status: true' +
-                        'data:' +
+                        'status: true ' +
+                        'data: ' +
                             '{ 0:' +
                                 '{ any: "value" }' +
                                 '{ any: "value" }' +
                                 '...' +
-                            '},' +
-                             '...' +
+                            '}, ' +
+                             ' ... ' +
                         'total_rows: 10' +
                         'message: "my message here"' +
-                    '}',
+                    ' }',
         dataType    : 'Data type invalid'
     };
 
@@ -421,6 +425,13 @@
                 url    : sUrl,
                 type   : 'POST',
                 data   : oData,
+                beforeSend: function() {
+                    if(! _process.isValidFormat('config.filter.ajax.beforeSend', 'function')) {
+                        return debug(ERROR_MSG.dataType + '. Must be a function');
+                    }
+
+                    config.filter.ajax.beforeSend();
+                },
                 success: function (sRetData) {
                     if (typeof sRetData === 'string' && sRetData.length) {
                         var oRetData, bDataHasVAlidFormat;
@@ -455,10 +466,17 @@
                         }
 
                         // if user wants to patch the complete then this function is suitable for it
-                        if(validateConfig('config.filter.ajax.complete', 'function') && bDataHasVAlidFormat) {
-                            config.filter.ajax.complete(oRetData);
+                        if(validateConfig('config.filter.ajax.success', 'function')) {
+                            config.filter.ajax.success(oRetData);
                         }
                     }
+                },
+                complete: function() {
+                    if(! _process.isValidFormat('config.filter.ajax.complete', 'function')) {
+                        return debug(ERROR_MSG.dataType + '. Must be a function');
+                    }
+
+                    config.filter.ajax.complete();
                 }
             };
 
