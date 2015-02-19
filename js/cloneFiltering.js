@@ -1,4 +1,3 @@
-/*jshint nonew:true, jquery:true, curly:true, noarg:true, forin:true, noempty:true, eqeqeq:true, strict:true, undef:true, bitwise:true, newcap:true, immed:true, onevar:true, browser:true, es3:true, devel:true, gcl:true */
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
@@ -25,7 +24,7 @@
  *                  customAjax: function(oSettings){        // (OPTIONAL) Will override the default ajax in this plugin
  *                      myCustomAjax(oSettings)
  *                  },
- *                  additionalData: {                       // (OPTIONAL) For security reason
+ *                  additionalData: {                       // (OPTIONAL) Additional data to be sent to the server
  *                      'my_token_name' : 'myTokenValue',
  *                      'my_additioanal_data_name' : 'myAdditionalValue'
  *                  },
@@ -55,7 +54,7 @@
 
     /**
      * Log the messages to the console
-     * NOTE: Use debug(message) instead of console.log()
+     * NOTE: Use debug(message) instead of console.log() or alert()
      *
      * Accepted value: 'development' or 'production'
      *
@@ -69,7 +68,7 @@
      */
     var ERROR_MSG = {
         ui          : 'DOM not found or do not exists!',
-        objectFormat: 'Format of the object is invalid. Format should be:' +
+        objectFormat: 'Format of the cloning data object is invalid. Format should be:' +
                     '{ ' +
                         'status: true' +
                         'data:' +
@@ -344,7 +343,7 @@
          */
         setFieldValue: function (uiClonedTemplate, oInsertData) {
             for (var key in oInsertData) {
-                if (oInsertData.hasOwnProperty(key)) {
+                if (helper.hasValidKey(oInsertData, key)) {
                     // set class of specific DOM
                     uiClonedTemplate.find('[data-class-field="' + key + '"]').addClass(oInsertData[key]);
 
@@ -698,7 +697,7 @@
          * @returns {boolean}
          */
         hasValidKey: function (oObject, sKey) {
-            return helper._isValidObject(oObject) && oObject.hasOwnProperty(sKey);
+            return helper._isValidObject(oObject) && oObject.hasOwnProperty(sKey) && oObject[sKey] !== null;
         },
 
         /**
@@ -720,7 +719,7 @@
      *
      * @param {Object} options Options of the plugin
      *
-     * @returns {jQuery}
+     * @return {$.fn} Returns jQuery object
      *
      * @constructor
      */
