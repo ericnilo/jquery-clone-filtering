@@ -1,7 +1,6 @@
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
- * @version 0.13.3
  *
  * $('#main_container')                             // Container of the load more, search, and sort OR the main container of the container and template
  *      .cloneFiltering({
@@ -28,8 +27,12 @@
  *                      'my_token_name' : 'myTokenValue',
  *                      'my_additioanal_data_name' : 'myAdditionalValue'
  *                  },
- *                  complete: function(oRetData) {          // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
- *                  }
+ *                  beforeSend: function(){                 // (OPTIONAL)
+ *                  },
+ *                  success: function(oRetData) {           // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
+ *                  },
+ *                  complete: function() {                  // (OPTIONAL)
+ *                  },
  *              },
  *              limit: 10,                              // (OPTIONAL) Will be using in load more
  *              loadMore: '.load_more',                 // (OPTIONAL) Selector of the load more. For now it only support non input button
@@ -70,17 +73,17 @@
         ui          : 'DOM not found or do not exists!',
         objectFormat: 'Format of the cloning data object is invalid. Format should be:' +
                     '{ ' +
-                        'status: true' +
-                        'data:' +
+                        'status: true ' +
+                        'data: ' +
                             '{ 0:' +
                                 '{ any: "value" }' +
                                 '{ any: "value" }' +
                                 '...' +
-                            '},' +
-                             '...' +
+                            '}, ' +
+                             ' ... ' +
                         'total_rows: 10' +
                         'message: "my message here"' +
-                    '}',
+                    ' }',
         dataType    : 'Data type invalid'
     };
 
@@ -122,7 +125,7 @@
         config = $.extend(defaults, options);
 
         if (!(validateConfig('config.clone.container', 'string') && validateConfig('config.clone.template', 'string'))) {
-            return ERROR_MSG.dataType;
+            return debug(ERROR_MSG.dataType);
         }
         // find for the container and the template
         var uiContainer = uiMainContainer.find(config.clone.container),
@@ -130,7 +133,7 @@
 
         // uiContainer && uiTemplate should be present so validate this
         if (!helper.isValid(uiContainer) && !helper.isValid(uiTemplate)) {
-            return config.clone.container + ' and ' + config.clone.template + ' ' + ERROR_MSG.ui; // stop if the two is not found
+            return debug(config.clone.container + ' and ' + config.clone.template + ' ' + ERROR_MSG.ui); // stop if the two is not found
         }
 
         // if config.clone.data is found or set process cloning immediately
@@ -327,12 +330,15 @@
          * @returns {boolean} If true oData has a valid format
          */
         isValidFormat: function (oData) {
-            return (
-                oData.hasOwnProperty('data') ||
-                oData.hasOwnProperty('total_rows') ||
-                oData.hasOwnProperty('message') ||
-                oData.hasOwnProperty('status')
-            );
+            var bIsValidFormat = true,
+                arrValidProperty = ['data', 'total_rows', 'message', 'status'];
+
+            for(var key in oData) {
+                if(arrValidProperty.indexOf(key) === -1){
+                    return false;
+                }
+            }
+            return bIsValidFormat;
         },
 
         /**
@@ -370,7 +376,7 @@
          */
         cloning: function (oData) {
             if (!this.isValidFormat(oData)) {
-                return ERROR_MSG.objectFormat; // stop if format of the object is invalid
+                return debug(ERROR_MSG.objectFormat); // stop if format of the object is invalid
             }
 
             var uiClonedTemplate;
@@ -418,9 +424,16 @@
                 url    : sUrl,
                 type   : 'POST',
                 data   : oData,
+                beforeSend: function() {
+                    if(! _process.isValidFormat('config.filter.ajax.beforeSend', 'function')) {
+                        return debug(ERROR_MSG.dataType + '. Must be a function');
+                    }
+
+                    config.filter.ajax.beforeSend();
+                },
                 success: function (sRetData) {
                     if (typeof sRetData === 'string' && sRetData.length) {
-                        var oRetData;
+                        var oRetData, bDataHasVAlidFormat;
 
                         try {
                             oRetData = $.parseJSON(sRetData);
@@ -429,8 +442,10 @@
                             return false;
                         }
 
-                        if (!_process.isValidFormat(oRetData)) {
-                            return ERROR_MSG.objectFormat; // stop if format of the object is invalid
+                        bDataHasVAlidFormat = _process.isValidFormat(oRetData);
+
+                        if (!bDataHasVAlidFormat) {
+                            return debug(ERROR_MSG.objectFormat); // stop if format of the object is invalid
                         }
 
                         if (helper.lengthOf(oRetData.data)) {
@@ -450,10 +465,17 @@
                         }
 
                         // if user wants to patch the complete then this function is suitable for it
-                        if(validateConfig('config.filter.ajax.complete', 'function')) {
-                            config.filter.ajax.complete(oRetData);
+                        if(validateConfig('config.filter.ajax.success', 'function')) {
+                            config.filter.ajax.success(oRetData);
                         }
                     }
+                },
+                complete: function() {
+                    if(! _process.isValidFormat('config.filter.ajax.complete', 'function')) {
+                        return debug(ERROR_MSG.dataType + '. Must be a function');
+                    }
+
+                    config.filter.ajax.complete();
                 }
             };
 
@@ -618,9 +640,11 @@
      *
      * @param {String} sMessage
      * @param {String} [sLogType = 'console']
+     *
+     * @return {String} The message passed.
      */
     var debug = function (sMessage, sLogType) {
-        if (mode === 'production') {
+        if (mode === 'development') {
             sLogType = (sLogType !== undefined) ? sLogType : 'console';
 
             switch (sLogType) {
@@ -632,6 +656,8 @@
                     break;
             }
         }
+
+        return sMessage;
     };
 
     var helper = {
