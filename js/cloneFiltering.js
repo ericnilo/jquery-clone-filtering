@@ -1,7 +1,6 @@
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
- * @version 0.13.3
  *
  * $('#main_container')                             // Container of the load more, search, and sort OR the main container of the container and template
  *      .cloneFiltering({
