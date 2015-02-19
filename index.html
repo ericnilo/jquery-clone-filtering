@@ -49,9 +49,8 @@
             filter: {
                 ajax     : {
                     url      : 'ajax/get_employee_list.php',
-                    csrfToken: {
-                        name : 'my_token',
-                        value: 'x5925626lsd62'
+                    additionalData: {
+                        'my_token' : 'myTokenValue'
                     }
                 },
                 search   : {

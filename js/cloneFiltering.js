@@ -25,9 +25,9 @@
  *                  customAjax: function(oSettings){        // (OPTIONAL) Will override the default ajax in this plugin
  *                      myCustomAjax(oSettings)
  *                  },
- *                  csrfToken: {                            // (OPTIONAL) For security reason
- *                      value: 'x5925626lsd62',
- *                      name: 'my_token'
+ *                  additionalData: {                       // (OPTIONAL) For security reason
+ *                      'my_token_name' : 'myTokenValue',
+ *                      'my_additioanal_data_name' : 'myAdditionalValue'
  *                  },
  *                  complete: function(oRetData) {          // (OPTIONAL) If user wants to patch the complete then this function is suitable for it
  *                  }
@@ -401,14 +401,14 @@
          * @param           [fnBeforeCloning]      Function that will be called before cloning
          */
         ajax: function (sUrl, oData, fnAdditionalCallback, fnBeforeCloning) {
-            var oSettings;
+            var oSettings, key;
 
-            // check if csrf_token is set
-            if (validateConfig('config.ajax.csrfToken', 'object')) {
-                if (validateConfig('config.filter.ajax.csrfToken.name', 'string') &&
-                    validateConfig('config.filter.ajax.csrfToken.value', 'string')
-                ) {
-                    oData[config.filter.ajax.csrfToken.name] = config.filter.ajax.csrfToken.value;
+            // check if additionalData is set
+            if (validateConfig('config.filter.ajax.additionalData', 'object')) {
+                for(key in config.filter.ajax.additionalData) {
+                    if(config.filter.ajax.additionalData.hasOwnProperty(key)) {
+                        oData[key] = config.filter.ajax.additionalData[key];
+                    }
                 }
             }
 
