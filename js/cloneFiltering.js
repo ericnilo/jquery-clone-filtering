@@ -413,7 +413,7 @@
             }
 
             // if config.filter.limit is not found then set the default to 10 and put it to the sending data
-            oData.limit = (!validateConfig('config.filter.limit', 'number')) ? config.filter.limit : 10;
+            oData.limit = (validateConfig('config.filter.limit', 'number')) ? config.filter.limit : 10;
 
             oSettings = {
                 url    : sUrl,
