@@ -425,11 +425,9 @@
                 type   : 'POST',
                 data   : oData,
                 beforeSend: function() {
-                    if(! _process.isValidFormat('config.filter.ajax.beforeSend', 'function')) {
-                        return debug(ERROR_MSG.dataType + '. Must be a function');
+                    if(validateConfig('config.filter.ajax.beforeSend', 'function')) {
+                        config.filter.ajax.beforeSend();
                     }
-
-                    config.filter.ajax.beforeSend();
                 },
                 success: function (sRetData) {
                     if (typeof sRetData === 'string' && sRetData.length) {
@@ -471,11 +469,9 @@
                     }
                 },
                 complete: function() {
-                    if(! _process.isValidFormat('config.filter.ajax.complete', 'function')) {
-                        return debug(ERROR_MSG.dataType + '. Must be a function');
+                    if(validateConfig('config.filter.ajax.complete', 'function')) {
+                        config.filter.ajax.complete();
                     }
-
-                    config.filter.ajax.complete();
                 }
             };
 
