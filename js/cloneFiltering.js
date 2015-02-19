@@ -122,7 +122,7 @@
         config = $.extend(defaults, options);
 
         if (!(validateConfig('config.clone.container', 'string') && validateConfig('config.clone.template', 'string'))) {
-            return ERROR_MSG.dataType;
+            return debug(ERROR_MSG.dataType);
         }
         // find for the container and the template
         var uiContainer = uiMainContainer.find(config.clone.container),
@@ -130,7 +130,7 @@
 
         // uiContainer && uiTemplate should be present so validate this
         if (!helper.isValid(uiContainer) && !helper.isValid(uiTemplate)) {
-            return config.clone.container + ' and ' + config.clone.template + ' ' + ERROR_MSG.ui; // stop if the two is not found
+            return debug(config.clone.container + ' and ' + config.clone.template + ' ' + ERROR_MSG.ui); // stop if the two is not found
         }
 
         // if config.clone.data is found or set process cloning immediately
@@ -327,12 +327,15 @@
          * @returns {boolean} If true oData has a valid format
          */
         isValidFormat: function (oData) {
-            return (
-                oData.hasOwnProperty('data') ||
-                oData.hasOwnProperty('total_rows') ||
-                oData.hasOwnProperty('message') ||
-                oData.hasOwnProperty('status')
-            );
+            var bIsValidFormat = true,
+                arrValidProperty = ['data', 'total_rows', 'message', 'status'];
+
+            for(var key in oData) {
+                if(arrValidProperty.indexOf(key) === -1){
+                    return false;
+                }
+            }
+            return bIsValidFormat;
         },
 
         /**
@@ -370,7 +373,7 @@
          */
         cloning: function (oData) {
             if (!this.isValidFormat(oData)) {
-                return ERROR_MSG.objectFormat; // stop if format of the object is invalid
+                return debug(ERROR_MSG.objectFormat); // stop if format of the object is invalid
             }
 
             var uiClonedTemplate;
@@ -432,7 +435,7 @@
                         bDataHasVAlidFormat = _process.isValidFormat(oRetData);
 
                         if (!bDataHasVAlidFormat) {
-                            return ERROR_MSG.objectFormat; // stop if format of the object is invalid
+                            return debug(ERROR_MSG.objectFormat); // stop if format of the object is invalid
                         }
 
                         if (helper.lengthOf(oRetData.data)) {
@@ -620,9 +623,11 @@
      *
      * @param {String} sMessage
      * @param {String} [sLogType = 'console']
+     *
+     * @return {String} The message passed.
      */
     var debug = function (sMessage, sLogType) {
-        if (mode === 'production') {
+        if (mode === 'development') {
             sLogType = (sLogType !== undefined) ? sLogType : 'console';
 
             switch (sLogType) {
@@ -634,6 +639,8 @@
                     break;
             }
         }
+
+        return sMessage;
     };
 
     var helper = {
