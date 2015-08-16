@@ -5,7 +5,7 @@
  * $('#main_container')                             // Container of the load more, search, and sort OR the main container of the container and template
  *      .cloneFiltering({
  *          clone: {
- *              container: '#container',                // (REQUIRED) Container of the template to be inserted
+ *              container: '#container',                // (REQUIRED) Container of the template to be inserted. TODO: need to make this optional, if set to optional then it will just return the populated template
  *              template: '[data-template="template"]', // (REQUIRED) Template to be cloned. Custom attribute must be data-template
  *              data: oData,                            // (OPTIONAL) If from ajax success this is required
  *                                                                      if url is set do not use this
@@ -37,7 +37,7 @@
  *              limit: 10,                              // (OPTIONAL) Will be using in load more
  *              loadMore: '.load_more',                 // (OPTIONAL) Selector of the load more. For now it only support non input button
  *              search: {                               // (OPTIONAL) Selector of the search input MUST BE AN INPUT
- *                  input: {
+ *                  input: {                            // TODO: This should also accept string since the eventType is keypress by default.
  *                      selector: 'input.search',
  *                      eventType: 'keypress'
  *                  },
@@ -50,7 +50,7 @@
  *          }
  *      });
  *
- * @todo: No documentation yet.
+ * @todo: No proper documentation yet.
  */
 (function ($) {
     "use strict";
@@ -354,7 +354,7 @@
                     uiClonedTemplate.find('[data-class-field="' + key + '"]').addClass(oInsertData[key]);
 
                     // set text of view field
-                    uiClonedTemplate.find('[data-view-field="' + key + '"]').text(oInsertData[key]);
+                    uiClonedTemplate.find('[data-lbl-field="' + key + '"]').text(oInsertData[key]);
 
                     // set value of input field
                     uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
@@ -584,50 +584,43 @@
     /**
      * Validates configuration settings options
      *
-     * @param {String} sConfig                     Configuration. Example config.filter.search.input.selector
-     * @param {String} sDataType                   Data type of the config
-     * @param {String} [sVarConfigName = 'config'] Configuration variable name example 'config'
+     * @param {String} sConfig                     Configuration. Example 'config.filter.search.input.selector'
+     * @param {String} sDataType                   Data type of the config example 'string' or 'function'
+     * @param {String} [oConfig = config]          Object variable example config
      *
      * @return {Boolean} True if config matches the valid data type
      */
-    var validateConfig = function (sConfig, sDataType, sVarConfigName) {
+    var validateConfig = function (sConfig, sDataType, oConfig) {
         var arrConfig = sConfig.split('.'), sLastElementVal,
-            oConfig = config;
+            sVarConfigName = arrConfig[0];
 
+        oConfig = (oConfig !== undefined) ? oConfig : config;
         sVarConfigName = (sVarConfigName !== undefined) ? sVarConfigName : 'config';
 
         // if you want to use this in other project then add the comparing value to the parameter above
         if (arrConfig[0] === sVarConfigName) {
-            arrConfig.shift(); // removes the first element if 'config' is found
+            arrConfig.shift(); // removes the first element if 'config' (which is the default) is found
         } else {
-            return false; // stop here if the starting string is not 'config'
+            return false; // stop here if the starting string is not 'config' or the sConfig value
         }
 
         // get the last element of arrConfig
         sLastElementVal = arrConfig[arrConfig.length - 1];
 
-        // if arrConfig has more than 2 elements then loop through it until sLastElementVal matches
+        // loop through it until sLastElementVal matches
         // then return true if it matches the supplied data type
-        if (arrConfig.length > 1) {
-            for(var i = 0; i < arrConfig.length; i++) {
-                if (arrConfig[i] === sLastElementVal) {
-                    return (sDataType === 'object') ?
-                           (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
-                           typeof oConfig[sLastElementVal] === sDataType;   // else
+        for (var i = 0; i < arrConfig.length; i++) {
+            if (arrConfig[i] === sLastElementVal) {
+                return (sDataType === 'object') ?
+                       (helper.lengthOf(oConfig[sLastElementVal]) > 0) : // if
+                       typeof oConfig[sLastElementVal] === sDataType;   // else
+            } else {
+                if (helper.hasValidKey(oConfig, arrConfig[i])) {
+                    oConfig = oConfig[arrConfig[i]];
                 } else {
-                    if (helper.hasValidKey(oConfig, arrConfig[i])) {
-                        oConfig = oConfig[arrConfig[i]];
-                    } else {
-                        return false;
-                    }
+                    return false;
                 }
             }
-        }
-        // if arrConfig has just one element then check immediately the data type of it
-        else {
-            return (sDataType === 'object') ? // if sDataType is 'object' then we should check it if it has more than 1 property or element on it
-                   (helper.lengthOf(oConfig[sLastElementVal]) > 0) :
-                   typeof oConfig[sLastElementVal] === sDataType;   // else
         }
     };
 
@@ -646,6 +639,7 @@
             switch (sLogType) {
                 case 'console':
                     console.log(sMessage);
+                    console.trace();
                     break;
                 case 'alert':
                     alert(sMessage);
@@ -745,7 +739,7 @@
      *
      * @constructor
      */
-    $.fn.cloneFiltering = function (options) {
+    $.fn.cloneFilter = function (options) {
 
         if (!this[0]) {
             return this; // stop here if main container not found
