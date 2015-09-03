@@ -379,15 +379,22 @@
                 return debug(ERROR_MSG.objectFormat); // stop if format of the object is invalid
             }
 
-            var uiClonedTemplate;
+            var uiClonedTemplate,
+                oCachedData = oData.data;
+            
+            // convert the data to array if it is an object
+            // since it contains only single data
+            if(oCachedData.length === undefined) {
+                oCachedData = [oCachedData];
+            }
 
-            for (var key in oData.data) {
-                if (oData.data.hasOwnProperty(key)) {
+            for (var key in oCachedData) {
+                if (oCachedData.hasOwnProperty(key)) {
                     // clone the template
                     uiClonedTemplate = uiMainContainer.find(config.clone.template).clone();
 
                     // set field value, text or class
-                    this.setFieldValue(uiClonedTemplate, oData.data[key]);
+                    this.setFieldValue(uiClonedTemplate, oCachedData[key]);
 
                     // remove the custom attribute of the cloned template and append it to the container
                     uiClonedTemplate
