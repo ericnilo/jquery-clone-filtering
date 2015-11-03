@@ -1,5 +1,5 @@
 /*jshint white:true, strict:true, noempty:true, noarg:true, eqeqeq:true, devel:true, jquery:true, browser:true, bitwise:true, curly:true, undef:true, nonew:true, forin:true */
-/*globals moment, store, iStoreSbuID, iUserId, iMainUserId, iStoreID, oSock, CPlatform*/
+/*globals jQuery, $*/
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
