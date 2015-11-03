@@ -1,3 +1,5 @@
+/*jshint white:true, strict:true, noempty:true, noarg:true, eqeqeq:true, devel:true, jquery:true, browser:true, bitwise:true, curly:true, undef:true, nonew:true, forin:true */
+/*globals moment, store, iStoreSbuID, iUserId, iMainUserId, iStoreID, oSock, CPlatform*/
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
@@ -334,10 +336,11 @@
                 arrValidProperty = ['data', 'total_rows', 'message', 'status'];
 
             for(var key in oData) {
-                if(arrValidProperty.indexOf(key) === -1){
+                if(oData.hasOwnProperty(key) && arrValidProperty.indexOf(key) === -1) {
                     return false;
                 }
             }
+
             return bIsValidFormat;
         },
 
@@ -379,15 +382,22 @@
                 return debug(ERROR_MSG.objectFormat); // stop if format of the object is invalid
             }
 
-            var uiClonedTemplate;
+            var uiClonedTemplate,
+                oCachedData = oData.data;
+            
+            // convert the data to array if it is an object
+            // since it contains only single data
+            if(oCachedData.length === undefined) {
+                oCachedData = [oCachedData];
+            }
 
-            for (var key in oData.data) {
-                if (oData.data.hasOwnProperty(key)) {
+            for (var key in oCachedData) {
+                if (oCachedData.hasOwnProperty(key)) {
                     // clone the template
                     uiClonedTemplate = uiMainContainer.find(config.clone.template).clone();
 
                     // set field value, text or class
-                    this.setFieldValue(uiClonedTemplate, oData.data[key]);
+                    this.setFieldValue(uiClonedTemplate, oCachedData[key]);
 
                     // remove the custom attribute of the cloned template and append it to the container
                     uiClonedTemplate
@@ -735,7 +745,7 @@
      *
      * @param {Object} options Options of the plugin
      *
-     * @return {$.fn} Returns jQuery object
+     * @return {$.fn | jQuery} Returns jQuery object
      *
      * @constructor
      */

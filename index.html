@@ -3,68 +3,58 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>Clone Filtering Test</title>
+    <style>
+        [data-template] {
+            display: none;
+        }
+    </style>
 </head>
 <body id="main_container">
+<div id="house-and-lot">
+    <div class="house">
 
-    <ul id="sorter">
-        <li data-sort-field="id">ID</li>
-        <li data-sort-field="fname">First Name</li>
-        <li data-sort-field="lname">Last Name</li>
-    </ul>
 
-    <input type="text" class="search" placeholder="search">
-    <button type="button" class="search_btn">Search</button>
-    <ul id="container">
-    </ul>
-
-    <button id="load_more_btn">Load More</button>
-
-    <ul style="display: none;" data-template-for="#container">
-        <li class="employee-list" data-id="2" data-template="employee-list">
-            <div data-view-type="view">
-                <p data-view-field="first_name">Emil</p>
-                <p data-view-field="mi">S.</p>
-                <p data-view-field="last_name">Nilo</p>
-            </div>
-            <div data-view-type="edit">
-                <form data-class-field="edit_form">
-                    <input type="hidden" data-input-field="id" name="id" value="2">
-                    <input type="text" data-input-field="first_name" name="first_name" value="Emil" placeholder="First Name">
-                    <input type="text" data-input-field="mi" name="mi" value="S." placeholder="Middle Initial">
-                    <input type="text" data-input-field="last_name" name="last_name" value="Nilo" placeholder="Last Name">
-                </form>
-            </div>
-        </li>
-    </ul>
-</body>
+    </div>
+    <div data-template="bedroom">
+        <span data-lbl-field="bed"></span>
+        <p data-class-field="lamp_color">This should have color</p>
+        <input data-input-field="num_of_pillow"/>
+        <div data-template="container_pillow">
+            <p data-lbl-field="pillow"></p>
+        </div>
+        <div data-template="container_cabinet">
+            <p data-lbl-field="dress"></p>
+            <p data-lbl-field="towel"></p>
+        </div>
+    </div>
+</div>
 <script src="js/jquery-1.11.1.js"></script>
-<script src="js/cloneFiltering.js"></script>
+<script src="js/jquery-cloneFiltering.js"></script>
 <script>
-    $(function () {
-        $('#main_container').cloneFiltering({
-            clone: {
-                container: '#container',
-                template : '[data-template="employee-list"]'
+    // no recursive yet
+    var oData = {
+        data: {
+            'bed'          : 'This is my bed',
+            'lamp_color'   : 'color-red',
+            'num_of_pillow': 2,
+            'container_cabinet' : {
+                'dress' : 'my dress 1',
+                'towel': 'my towel 1'
             },
-            filter: {
-                ajax     : {
-                    url      : 'ajax/get_employee_list.php',
-                    additionalData: {
-                        'my_token' : 'myTokenValue'
-                    }
-                },
-                search   : {
-                    input: {
-                        selector: 'input.search'
-                    },
-                    btn  : 'button.search_btn'
-                },
-                loadMore : '#load_more_btn',
-                sort     : {
-                    selector: '#sorter'
-                }
-            }
-        })
+            'container_pillow' : [{
+                'pillow' : 'my pillow 1'
+            }, {
+                'pillow' : 'my pillow 2'
+            }]
+        }
+    };
+    $('#house-and-lot').cloneFilter({
+        clone: {
+            container: 'div.house',
+            template : 'div[data-template="bedroom"]',
+            data     : oData
+        }
     });
 </script>
+</body>
 </html>
