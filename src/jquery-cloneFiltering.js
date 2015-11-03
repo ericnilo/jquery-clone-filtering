@@ -676,7 +676,7 @@
          * @returns {number} Length of an oObject
          */
         lengthOf: function (oObject) {
-            if (!helper._isValidObject(oObject)) {
+            if (!helper.isValidObject(oObject)) {
                 return 0; // stop here if oObject is not defined or not an object
             }
 
@@ -730,7 +730,7 @@
          * @returns {boolean}
          */
         hasValidKey: function (oObject, sKey) {
-            return helper._isValidObject(oObject) && oObject.hasOwnProperty(sKey) && oObject[sKey] !== null;
+            return helper.isValidObject(oObject) && oObject.hasOwnProperty(sKey) && oObject[sKey] !== null;
         },
 
         /**
@@ -742,7 +742,7 @@
          *
          * @private
          */
-        _isValidObject: function (oObject) {
+        isValidObject: function (oObject) {
             return (oObject !== undefined && typeof oObject === 'object');
         }
     };
