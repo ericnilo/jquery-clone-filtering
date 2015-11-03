@@ -1,4 +1,4 @@
-/*jshint white:true, strict:true, noempty:true, noarg:true, eqeqeq:true, devel:true, jquery:true, browser:true, bitwise:true, curly:true, undef:true, nonew:true, forin:true */
+/*jshint strict:true, onevar:true, noarg:true, eqeqeq:true, devel:true, jquery:true, browser:true, bitwise:true, debug:true, curly:true, undef:true, eqnull:true, nonew:true, forin:true */
 /*globals jQuery, $*/
 /**
  * Makes cloning and filtering more easier and convenient
