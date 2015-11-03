@@ -1,3 +1,5 @@
+/*jshint white:true, strict:true, noempty:true, noarg:true, eqeqeq:true, devel:true, jquery:true, browser:true, bitwise:true, curly:true, undef:true, nonew:true, forin:true */
+/*globals moment, store, iStoreSbuID, iUserId, iMainUserId, iStoreID, oSock, CPlatform*/
 /**
  * Makes cloning and filtering more easier and convenient
  * @author Eric Nilo
@@ -334,10 +336,11 @@
                 arrValidProperty = ['data', 'total_rows', 'message', 'status'];
 
             for(var key in oData) {
-                if(arrValidProperty.indexOf(key) === -1){
+                if(oData.hasOwnProperty(key) && arrValidProperty.indexOf(key) === -1) {
                     return false;
                 }
             }
+
             return bIsValidFormat;
         },
 
@@ -742,7 +745,7 @@
      *
      * @param {Object} options Options of the plugin
      *
-     * @return {$.fn} Returns jQuery object
+     * @return {$.fn | jQuery} Returns jQuery object
      *
      * @constructor
      */
