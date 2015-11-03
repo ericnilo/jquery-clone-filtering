@@ -353,14 +353,21 @@
         setFieldValue: function (uiClonedTemplate, oInsertData) {
             for (var key in oInsertData) {
                 if (helper.hasValidKey(oInsertData, key)) {
-                    // set class of specific DOM
-                    uiClonedTemplate.find('[data-class-field="' + key + '"]').addClass(oInsertData[key]);
 
-                    // set text of view field
-                    uiClonedTemplate.find('[data-lbl-field="' + key + '"]').text(oInsertData[key]);
+                    uiClonedTemplate
+                        // set class of specific DOM
+                        .find('[data-class-field="' + key + '"]')
+                            .addClass(oInsertData[key])
+                        .end()
 
-                    // set value of input field
-                    uiClonedTemplate.find('[data-input-field="' + key + '"]').val(oInsertData[key]);
+                        // set text of view field
+                        .find('[data-lbl-field="' + key + '"]')
+                            .text(oInsertData[key])
+                        .end()
+
+                        // set value of input field
+                        .find('[data-input-field="' + key + '"]')
+                            .val(oInsertData[key]);
 
                     // set the custom field value of cloned template for extendability
                     if (validateConfig('config.clone.customFieldValue', 'function')) {
