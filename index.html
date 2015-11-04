@@ -31,29 +31,31 @@
 <script src="https://code.jquery.com/jquery-1.7.2.js"></script>
 <script src="src/jquery-cloneFiltering.js"></script>
 <script>
-    // no recursive yet
-    var oData = {
-        data: {
-            'bed'          : 'This is my bed',
-            'lamp_color'   : 'color-red',
-            'num_of_pillow': 2,
-            'container_cabinet' : {
-                'dress' : 'my dress 1',
-                'towel': 'my towel 1'
-            },
-            'container_pillow' : [{
-                'pillow' : 'my pillow 1'
-            }, {
-                'pillow' : 'my pillow 2'
-            }]
-        }
-    };
-    $('#house-and-lot').cloneFilter({
-        clone: {
-            container: 'div.house',
-            template : 'div[data-template="bedroom"]',
-            data     : oData
-        }
+    $(function () {
+        // no recursive yet
+        var oData = {
+            data: {
+                'bed'          : 'This is my bed',
+                'lamp_color'   : 'color-red',
+                'num_of_pillow': 2,
+                'container_cabinet' : {
+                    'dress' : 'my dress 1',
+                    'towel': 'my towel 1'
+                },
+                'container_pillow' : [{
+                    'pillow' : 'my pillow 1'
+                }, {
+                    'pillow' : 'my pillow 2'
+                }]
+            }
+        };
+        $('#house-and-lot').cloneFilter({
+            clone: {
+                container: 'div.house',
+                template : 'div[data-template="bedroom"]',
+                data     : oData
+            }
+        });
     });
 </script>
 </body>
